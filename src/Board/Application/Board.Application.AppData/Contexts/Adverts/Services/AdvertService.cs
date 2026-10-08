@@ -3,6 +3,7 @@ using Board.Application.AppData.Common;
 using Board.Application.AppData.Common.Exceptions;
 using Board.Application.AppData.Contexts.Adverts.Repositories;
 using Board.Application.AppData.Contexts.Categories.Repositories;
+using Board.Contracts;
 using Board.Contracts.Advert;
 using Board.Domain.Adverts;
 
@@ -29,9 +30,9 @@ public class AdvertService : IAdvertService
     }
 
     /// <inheritdoc />
-    public Task<AdvertShortInfoDto[]> GetAll(CancellationToken cancellationToken)
+    public Task<AdvertShortInfoDto[]> GetAll(PageRequestDto page, CancellationToken cancellationToken)
     {
-        return _advertRepository.GetAll(cancellationToken);
+        return _advertRepository.GetAll(page.Skip, Math.Clamp(page.Take, 1, PageRequestDto.MaxTake), cancellationToken);
     }
 
     /// <inheritdoc />

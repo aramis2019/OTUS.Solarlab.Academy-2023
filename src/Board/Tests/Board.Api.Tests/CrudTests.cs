@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -176,6 +176,37 @@ namespace Board.Api.Tests
             var response = await _webApplicationFactory.CreateClient().PostAsJsonAsync("Category", new CreateCategoryDto { Name = "Anon" });
 
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Advert_GetAll_IsPagedNewestFirst()
+        {
+            var client = await _webApplicationFactory.CreateAuthorizedClientAsync();
+            for (var i = 0; i < 3; i++)
+            {
+                var advert = NewAdvert(DataSeedHelper.TestCategoryId);
+                advert.Name = $"paged_{i}";
+                await client.PostAsJsonAsync("Advert", advert);
+            }
+
+            var firstPage = await client.GetFromJsonAsync<AdvertShortInfoDto[]>("Advert?take=2");
+            var secondPage = await client.GetFromJsonAsync<AdvertShortInfoDto[]>("Advert?skip=1&take=2");
+
+            Assert.Equal(2, firstPage!.Length);
+            Assert.Equal("paged_2", firstPage[0].Name);
+            Assert.Equal("paged_1", firstPage[1].Name);
+            Assert.Equal(firstPage[1].Id, secondPage![0].Id);
+        }
+
+        [Theory]
+        [InlineData("Advert?take=0")]
+        [InlineData("Advert?take=101")]
+        [InlineData("Advert?skip=-1")]
+        public async Task Advert_GetAll_InvalidPage_Returns400(string url)
+        {
+            var response = await _webApplicationFactory.CreateClient().GetAsync(url);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
 
         private static UpdateAdvertDto NewAdvert(Guid categoryId) => new()

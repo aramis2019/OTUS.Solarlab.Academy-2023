@@ -1,3 +1,4 @@
+using Board.Contracts;
 using Board.Contracts.Advert;
 
 namespace Board.Application.AppData.Contexts.Adverts.Services;
@@ -8,9 +9,9 @@ namespace Board.Application.AppData.Contexts.Adverts.Services;
 public interface IAdvertService
 {
     /// <summary>
-    /// Получить список активных объявлений.
+    /// Получить страницу активных объявлений, от новых к старым.
     /// </summary>
-    Task<AdvertShortInfoDto[]> GetAll(CancellationToken cancellationToken);
+    Task<AdvertShortInfoDto[]> GetAll(PageRequestDto page, CancellationToken cancellationToken);
 
     /// <summary>
     /// Получить объявление по идентификатору.

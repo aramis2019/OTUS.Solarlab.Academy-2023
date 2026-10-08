@@ -9,11 +9,13 @@ namespace Board.Application.AppData.Contexts.Adverts.Repositories;
 public interface IAdvertRepository
 {
     /// <summary>
-    /// Получить список активных объявлений.
+    /// Получить страницу активных объявлений, от новых к старым.
     /// </summary>
+    /// <param name="skip">Сколько объявлений пропустить.</param>
+    /// <param name="take">Сколько объявлений вернуть.</param>
     /// <param name="cancellationToken">Токен отмены операции.</param>
     /// <returns>Список объявлений.</returns>
-    Task<AdvertShortInfoDto[]> GetAll(CancellationToken cancellationToken);
+    Task<AdvertShortInfoDto[]> GetAll(int skip, int take, CancellationToken cancellationToken);
 
     /// <summary>
     /// Получить объявление по идентификатору.

@@ -34,18 +34,21 @@ public class AdvertController : ControllerBase
     }
 
     /// <summary>
-    /// Получить список объявлений.
+    /// Получить страницу активных объявлений, от новых к старым.
     /// </summary>
+    /// <param name="page">Параметры страницы: skip (по умолчанию 0) и take (по умолчанию 20, максимум 100).</param>
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <response code="200">Запрос выполнен успешно</response>
+    /// <response code="400">Некорректные параметры страницы.</response>
     /// <returns>Список моделей объявлений.</returns>
     [HttpGet]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(IEnumerable<AdvertShortInfoDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(AdvertShortInfoDto[]), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetAll([FromQuery] PageRequestDto page, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Запрос списка объявлений");
-        var result = await _advertService.GetAll(cancellationToken);
+        _logger.LogInformation("Запрос списка объявлений: skip={Skip}, take={Take}", page.Skip, page.Take);
+        var result = await _advertService.GetAll(page, cancellationToken);
         return Ok(result);
     }
 

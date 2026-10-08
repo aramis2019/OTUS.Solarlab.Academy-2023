@@ -7,18 +7,18 @@ namespace Board.Api.Tests
 {
     public class TestBoardDbContextConfiguration : IDbContextOptionsConfigurator<BoardDbContext>
     {
-        public const string InMemoryDatabaseName = "BoardDb";
-
+        private readonly string _databaseName;
         private readonly ILoggerFactory _loggerFactory;
 
-        public TestBoardDbContextConfiguration(ILoggerFactory loggerFactory)
+        public TestBoardDbContextConfiguration(string databaseName, ILoggerFactory loggerFactory)
         {
+            _databaseName = databaseName;
             _loggerFactory = loggerFactory;
         }
 
         public void Configure(DbContextOptionsBuilder<BoardDbContext> options)
         {
-            options.UseInMemoryDatabase(InMemoryDatabaseName);
+            options.UseInMemoryDatabase(_databaseName);
             options.UseLoggerFactory(_loggerFactory);
             options.EnableSensitiveDataLogging();
         }

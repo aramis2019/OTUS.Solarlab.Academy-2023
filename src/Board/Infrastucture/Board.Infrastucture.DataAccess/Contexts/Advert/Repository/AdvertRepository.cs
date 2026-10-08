@@ -21,9 +21,11 @@ public class AdvertRepository : IAdvertRepository
         _mapper = mapper;
     }
 
-    public Task<AdvertShortInfoDto[]> GetAll(CancellationToken cancellationToken)
+    public Task<AdvertShortInfoDto[]> GetAll(int skip, int take, CancellationToken cancellationToken)
     {
         return _repository.GetAll().Where(s => s.IsActive)
+            .OrderByDescending(s => s.Created).ThenBy(s => s.Id)
+            .Skip(skip).Take(take)
             .ProjectTo<AdvertShortInfoDto>(_mapper.ConfigurationProvider)
             .ToArrayAsync(cancellationToken);
     }

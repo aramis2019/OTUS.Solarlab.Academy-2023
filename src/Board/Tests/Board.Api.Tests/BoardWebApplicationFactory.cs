@@ -21,6 +21,9 @@ namespace Board.Api.Tests
     {
         public const string TestJwtKey = "test-jwt-signing-key-at-least-32-bytes-long";
 
+        // Своя БД на каждую фабрику: тестовые классы выполняются параллельно и не должны видеть данные друг друга.
+        private readonly string _databaseName = $"BoardDb_{Guid.NewGuid():N}";
+
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseSetting("Jwt:Key", TestJwtKey);
@@ -34,7 +37,8 @@ namespace Board.Api.Tests
 
                 services.Remove(descriptor!);
 
-                services.AddSingleton<IDbContextOptionsConfigurator<BoardDbContext>, TestBoardDbContextConfiguration>();
+                services.AddSingleton<IDbContextOptionsConfigurator<BoardDbContext>>(sp =>
+                    new TestBoardDbContextConfiguration(_databaseName, sp.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>()));
                 
                 var sp = services.BuildServiceProvider();
                 using var scope = sp.CreateScope();
@@ -77,7 +81,7 @@ namespace Board.Api.Tests
         public BoardDbContext CreateDbContext()
         {
             var optionsBuilder = new DbContextOptionsBuilder<BoardDbContext>();
-            optionsBuilder.UseInMemoryDatabase(TestBoardDbContextConfiguration.InMemoryDatabaseName);
+            optionsBuilder.UseInMemoryDatabase(_databaseName);
             optionsBuilder.EnableSensitiveDataLogging();
             var dbContext = new BoardDbContext(optionsBuilder.Options);
             return dbContext;
