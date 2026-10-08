@@ -1,8 +1,10 @@
 ﻿using System.Linq.Expressions;
 using AutoMapper;
+using Board.Application.AppData.Common.Exceptions;
 using Board.Application.AppData.Contexts.Accounts.Repositories;
 using Board.Infrastucture.Repository;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Board.Infrastucture.DataAccess.Contexts.Account.Repository;
 
@@ -21,7 +23,16 @@ public class AccountRepository : IAccountRepository
     /// <inheritdoc/>
     public async Task<Guid> AddAsync(Domain.Account.Account model, CancellationToken cancellation)
     {
-        await _repository.AddAsync(model, cancellation);
+        try
+        {
+            await _repository.AddAsync(model, cancellation);
+        }
+        catch (DbUpdateException e) when (e.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            // Проверка логина в сервисе не защищает от одновременной регистрации: её ловит уникальный индекс.
+            throw new BusinessRuleException($"Пользователь с логином '{model.Login}' уже зарегистрирован.");
+        }
+
         return model.Id;
     }
 
