@@ -26,12 +26,11 @@ using Board.Infrastucture.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -61,13 +60,17 @@ builder.Services.AddScoped<IForbiddenWordsService, ForbiddenWordsService>();
 builder.Services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
 builder.Services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
 
-builder.Services.AddSingleton<IMapper>(new Mapper(GetMapperConfiguration()));
+// AutoMapper 15+ распространяется по коммерческой лицензии: ключ задаётся в AutoMapper:LicenseKey
+// (user-secrets / переменная окружения AutoMapper__LicenseKey). Без ключа AutoMapper работает, но пишет предупреждение в лог.
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.LicenseKey = builder.Configuration["AutoMapper:LicenseKey"];
+    cfg.AddProfile<CategoryProfile>();
+    cfg.AddProfile<AdvertProfile>();
+    cfg.AddProfile<FileProfile>();
+});
 
-builder.Services.AddControllers(options =>
-    {
-        // Newtonsoft нужен только для JsonPatchDocument, остальное сериализуется System.Text.Json.
-        options.InputFormatters.Insert(0, GetJsonPatchInputFormatter());
-    })
+builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
         // Ошибки валидации модели возвращаем в том же формате ErrorDto, что и остальные ошибки.
@@ -130,43 +133,27 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Advert Api", Version = "V1" });
-    options.IncludeXmlComments(Path.Combine(Path.Combine(AppContext.BaseDirectory,
-        $"{typeof(CreateAdvertDto).Assembly.GetName().Name}.xml")));
-    options.IncludeXmlComments(Path.Combine(Path.Combine(AppContext.BaseDirectory, "Documentation.xml")));
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{typeof(CreateAdvertDto).Assembly.GetName().Name}.xml"));
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{typeof(Program).Assembly.GetName().Name}.xml"));
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = @"JWT Authorization header using the Bearer scheme.  
-                        Enter 'Bearer' [space] and then your token in the text input below.
-                        Example: 'Bearer secretKey'",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = JwtBearerDefaults.AuthenticationScheme
+        Description = "JWT из ответа POST /Account/login (без префикса 'Bearer').",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
     });
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
-        {
-            new OpenApiSecurityScheme
-            { 
-                Reference = new OpenApiReference
-                { 
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                },
-                Scheme="oauth2",
-                Name= "Bearer",
-                In = ParameterLocation.Header,
-            },
-            new List<string>()
-        }
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
     });
 });
 
 var app = builder.Build();
 
-// Падаем при старте, а не на первом запросе, если ключ подписи JWT не задан.
+// Падаем при старте, а не на первом запросе, если ключ подписи JWT не задан или маппинги некорректны.
 GetJwtKey(app.Configuration);
+app.Services.GetRequiredService<IMapper>().ConfigurationProvider.AssertConfigurationIsValid();
 
 // Configure the HTTP request pipeline.
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -202,31 +189,6 @@ static string GetJwtKey(IConfiguration configuration)
             "Задайте его через user-secrets или переменную окружения Jwt__Key.");
     }
     return key;
-}
-
-static NewtonsoftJsonPatchInputFormatter GetJsonPatchInputFormatter()
-{
-    return new ServiceCollection()
-        .AddLogging()
-        .AddMvc()
-        .AddNewtonsoftJson()
-        .Services.BuildServiceProvider()
-        .GetRequiredService<IOptions<MvcOptions>>()
-        .Value.InputFormatters
-        .OfType<NewtonsoftJsonPatchInputFormatter>()
-        .First();
-}
-
-static MapperConfiguration GetMapperConfiguration()
-{
-    var configuration = new MapperConfiguration(cfg => 
-    {
-        cfg.AddProfile<CategoryProfile>();
-        cfg.AddProfile<AdvertProfile>();
-        cfg.AddProfile<FileProfile>();
-    });
-    configuration.AssertConfigurationIsValid();
-    return configuration;
 }
 
 public partial class Program {}

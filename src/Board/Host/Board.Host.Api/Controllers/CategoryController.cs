@@ -2,7 +2,7 @@
 using Board.Contracts;
 using Board.Contracts.Category;
 using Board.Host.Api.Extensions;
-using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -150,7 +150,7 @@ public class CategoryController : ControllerBase
     {
         var model = await _categoryService.GetForUpdateAsync(id, cancellationToken);
 
-        dto.ApplyTo(model, ModelState);
+        dto.ApplyTo(model, error => ModelState.AddModelError(error.Operation.path ?? string.Empty, error.ErrorMessage));
         if (!ModelState.IsValid || !TryValidateModel(model))
         {
             return this.InvalidModelState();

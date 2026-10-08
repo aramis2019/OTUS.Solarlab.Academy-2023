@@ -7,7 +7,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Board.Contracts.Advert;
 using Board.Domain.Adverts;
-using Newtonsoft.Json;
 using Xunit;
 
 namespace Board.Api.Tests
@@ -62,8 +61,7 @@ namespace Board.Api.Tests
 
 
             // Act
-            HttpContent content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync("Advert", content);
+            var response = await httpClient.PostAsJsonAsync("Advert", model);
 
             // Assert
             Assert.NotNull(response);

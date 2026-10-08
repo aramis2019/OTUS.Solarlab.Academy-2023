@@ -11,8 +11,8 @@ namespace Board.Host.DbMigrator
             {
                 services.AddServices(hostContext.Configuration);
             }).Build();
+            // Применяем миграции и завершаемся: держать контейнер мигратора запущенным незачем.
             await MigrateDatabaseAsync(host.Services);
-            await host.RunAsync();
         }
 
         private static async Task MigrateDatabaseAsync(IServiceProvider serviceProvider)

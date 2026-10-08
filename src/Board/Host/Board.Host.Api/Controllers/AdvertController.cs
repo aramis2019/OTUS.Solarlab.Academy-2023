@@ -2,10 +2,9 @@
 using Board.Contracts;
 using Board.Contracts.Advert;
 using Board.Host.Api.Extensions;
-using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 
 namespace Board.Host.Api.Controllers;
 
@@ -84,7 +83,7 @@ public class AdvertController : ControllerBase
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> Create([FromBody] CreateAdvertDto dto, CancellationToken cancellationToken)
     {
-        _logger.LogInformation($"Запрос на создание объявления: {JsonConvert.SerializeObject(dto)}");
+        _logger.LogInformation("Запрос на создание объявления {Name}", dto.Name);
         var result = await _advertService.Add(dto, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
@@ -138,7 +137,7 @@ public class AdvertController : ControllerBase
         _logger.LogInformation("Запрос на частичное обновление объявления {Id}", id);
         var model = await _advertService.GetForUpdate(id, cancellationToken);
 
-        dto.ApplyTo(model, ModelState);
+        dto.ApplyTo(model, error => ModelState.AddModelError(error.Operation.path ?? string.Empty, error.ErrorMessage));
         if (!ModelState.IsValid || !TryValidateModel(model))
         {
             return this.InvalidModelState();
