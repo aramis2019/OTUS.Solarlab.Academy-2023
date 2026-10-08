@@ -32,10 +32,17 @@ public interface IAdvertRepository
     Task<AdvertInfoDto> Add(Advert entity, CancellationToken cancellation);
 
     /// <summary>
-    /// Удалить объявление.
+    /// Найти сущность объявления по идентификатору.
     /// </summary>
     /// <param name="id">Идентификатор объявления.</param>
     /// <param name="cancellationToken">Токен отмены операции.</param>
-    /// <returns></returns>
-    Task Delete(Guid id, CancellationToken cancellationToken);
+    /// <returns>Объявление или null, если не найдено.</returns>
+    Task<Advert?> FindById(Guid id, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Удалить объявление.
+    /// </summary>
+    /// <param name="entity">Объявление.</param>
+    /// <param name="cancellationToken">Токен отмены операции.</param>
+    Task Delete(Advert entity, CancellationToken cancellationToken);
 }

@@ -19,6 +19,8 @@ namespace Board.Infrastucture.DataAccess.Contexts.Advert.Configuration
             builder.Property(a => a.ImageUrl).HasMaxLength(250).IsRequired(false);
             builder.Property(a => a.Address).HasMaxLength(250).IsRequired();
             builder.Property(a => a.Created).HasConversion(s => s, s => DateTime.SpecifyKind(s, DateTimeKind.Utc));
+
+            builder.HasOne<Domain.Account.Account>().WithMany().HasForeignKey(a => a.AccountId).OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

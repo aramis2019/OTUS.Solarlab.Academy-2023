@@ -34,5 +34,10 @@
         /// Время создания.
         /// </summary>
         public DateTime Created { get; set; }
+
+        /// <summary>
+        /// Идентификатор аккаунта, загрузившего файл (null у файлов, загруженных до появления авторства).
+        /// </summary>
+        public Guid? AccountId { get; set; }
     }
 }

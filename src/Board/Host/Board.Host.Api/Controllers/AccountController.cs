@@ -1,4 +1,4 @@
-﻿using Board.Application.AppData.Contexts.Adverts.Services;
+﻿using Board.Application.AppData.Contexts.Accounts.Services;
 using Board.Contracts;
 using Board.Contracts.Account;
 using Microsoft.AspNetCore.Authentication;
@@ -16,7 +16,6 @@ namespace Board.Host.Api.Controllers;
 /// <response code="500">Произошла внутренняя ошибка.</response>
 [ApiController]
 [Route("[controller]")]
-[AllowAnonymous]
 [Produces("application/json")]
 [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status500InternalServerError)]
 public class AccountController : ControllerBase
@@ -44,6 +43,7 @@ public class AccountController : ControllerBase
     /// <response code="422">Произошёл конфликт бизнес-логики.</response>
     /// <returns>Модель зарегистрированного аккаунта.</returns>
     [HttpPost("register")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(AccountDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status422UnprocessableEntity)]
@@ -67,6 +67,7 @@ public class AccountController : ControllerBase
     /// <response code="404">Пользователь не найден.</response>
     /// <returns>Модель с данными входа.</returns>
     [HttpPost("login")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(LoginResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status403Forbidden)]
@@ -87,6 +88,7 @@ public class AccountController : ControllerBase
     }
 
     [HttpPost("GetUserInfo")]
+    [Authorize]
     public async Task<AccountDto> GetUserInfo(CancellationToken cancellation)
     {
         var result = await _accountService.GetCurrentAsync(cancellation);

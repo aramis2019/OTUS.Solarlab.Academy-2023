@@ -1,4 +1,7 @@
 using AutoMapper;
+using Board.Application.AppData.Common;
+using Board.Application.AppData.Contexts.Accounts.Repositories;
+using Board.Application.AppData.Contexts.Accounts.Services;
 using Board.Application.AppData.Contexts.Adverts.Repositories;
 using Board.Application.AppData.Contexts.Adverts.Services;
 using Board.Application.AppData.Contexts.Categories.Repositories;
@@ -8,6 +11,7 @@ using Board.Application.AppData.Contexts.Files.Services;
 using Board.Application.AppData.Services;
 using Board.Contracts.Advert;
 using Board.Contracts.Interfaces;
+using Board.Host.Api.Services;
 using Board.Infrastucture.DataAccess;
 using Board.Infrastucture.DataAccess.Contexts.Account.Repository;
 using Board.Infrastucture.DataAccess.Contexts.Advert.Repository;
@@ -49,33 +53,39 @@ builder.Services.AddScoped<IAdvertService, AdvertService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAdvertService, AdvertService>();
 builder.Services.AddScoped<IForbiddenWordsService, ForbiddenWordsService>();
+builder.Services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
+builder.Services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
 
 builder.Services.AddSingleton<IMapper>(new Mapper(GetMapperConfiguration()));
 
 builder.Services.AddControllers();
 
-builder.Services.AddCors();
+builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy
+    .WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>())
+    .AllowAnyMethod()
+    .AllowAnyHeader()));
 
 #region Authentication & Authorization
 
 builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(
-    options =>
-    {
-        var secretKey = builder.Configuration["Jwt:Key"];
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 
+// Настройки читаются лениво из итоговой конфигурации, чтобы ключ можно было задать
+// через переменные окружения, user-secrets или переопределить в тестах.
+builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IConfiguration>((options, configuration) =>
+    {
         options.RequireHttpsMetadata = false;
-        options.SaveToken = true;
-        options.TokenValidationParameters = new TokenValidationParameters()
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateActor = false,
-            ValidateIssuer = false,
-            ValidateAudience = false,
+            ValidateIssuer = true,
+            ValidIssuer = configuration["Jwt:Issuer"],
+            ValidateAudience = true,
+            ValidAudience = configuration["Jwt:Audience"],
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(GetJwtKey(configuration)))
         };
     });
 
@@ -124,20 +134,21 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+// Падаем при старте, а не на первом запросе, если ключ подписи JWT не задан.
+GetJwtKey(app.Configuration);
+
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
+if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    app.UseHsts();
+}
 
-app.UseCors(x => x
-    .AllowAnyMethod()
-    .AllowAnyHeader()
-    .SetIsOriginAllowed(origin => true) // allow any origin
-    .AllowCredentials());
-
-app.UseHsts();
+app.UseCors();
 
 app.UseHttpsRedirection();
 
@@ -147,6 +158,18 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static string GetJwtKey(IConfiguration configuration)
+{
+    var key = configuration["Jwt:Key"];
+    if (string.IsNullOrWhiteSpace(key) || Encoding.UTF8.GetByteCount(key) < 32)
+    {
+        throw new InvalidOperationException(
+            "Не задан ключ подписи JWT 'Jwt:Key' (минимум 32 байта). " +
+            "Задайте его через user-secrets или переменную окружения Jwt__Key.");
+    }
+    return key;
+}
 
 static MapperConfiguration GetMapperConfiguration()
 {

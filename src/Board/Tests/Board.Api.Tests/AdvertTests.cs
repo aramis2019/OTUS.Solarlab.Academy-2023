@@ -50,7 +50,7 @@ namespace Board.Api.Tests
         public async Task Advert_Add_Success()
         {
             // Arrange
-            var httpClient = _webApplicationFactory.CreateClient();
+            var httpClient = await _webApplicationFactory.CreateAuthorizedClientAsync();
 
             CreateAdvertDto model = new CreateAdvertDto
             {
@@ -83,6 +83,24 @@ namespace Board.Api.Tests
             Assert.Equal(model.Description, advert.Description);
             Assert.Equal(model.Address, advert.Address);
             Assert.True(advert.IsActive);
+            Assert.NotNull(advert.AccountId);
+        }
+
+        [Fact]
+        public async Task Advert_Add_Unauthorized()
+        {
+            var httpClient = _webApplicationFactory.CreateClient();
+            var model = new CreateAdvertDto
+            {
+                Name = "test_name",
+                Description = "test_description",
+                CategoryId = DataSeedHelper.TestCategoryId,
+                Address = "some_city"
+            };
+
+            var response = await httpClient.PostAsJsonAsync("Advert", model);
+
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
     }
 }

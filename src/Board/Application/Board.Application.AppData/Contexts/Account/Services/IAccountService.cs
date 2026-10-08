@@ -1,7 +1,7 @@
 ﻿using Board.Contracts.Account;
 using Board.Domain.Account;
 
-namespace Board.Application.AppData.Contexts.Adverts.Services;
+namespace Board.Application.AppData.Contexts.Accounts.Services;
 
 /// <summary>
 /// Сервис для регистриции\авторизации пользователя.

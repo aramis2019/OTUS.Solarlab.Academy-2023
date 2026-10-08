@@ -42,15 +42,13 @@ public class AdvertRepository : IAdvertRepository
         return _mapper.Map<AdvertInfoDto>(entity);
     }
 
-    public async Task Delete(Guid id, CancellationToken cancellationToken)
+    public Task<Advert> FindById(Guid id, CancellationToken cancellationToken)
     {
-        var entity = await _repository.GetAll().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return _repository.GetByIdAsync(id, cancellationToken);
+    }
 
-        if (entity == null)
-        {
-            return;
-        }
-
-        await _repository.DeleteAsync(entity, cancellationToken);
+    public Task Delete(Advert entity, CancellationToken cancellationToken)
+    {
+        return _repository.DeleteAsync(entity, cancellationToken);
     }
 }

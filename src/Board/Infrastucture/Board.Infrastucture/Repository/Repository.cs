@@ -38,7 +38,7 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity: class
     /// <inheritdoc />
     public async Task<TEntity> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        return await DbSet.FindAsync(id, cancellationToken);
+        return await DbSet.FindAsync(new object[] { id }, cancellationToken);
     }
 
     /// <inheritdoc />

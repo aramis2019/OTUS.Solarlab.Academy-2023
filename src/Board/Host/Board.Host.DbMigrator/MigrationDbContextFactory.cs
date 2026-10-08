@@ -11,7 +11,10 @@ namespace Board.Host.DbMigrator
         /// <inheritdoc/>
         public MigrationDbContext CreateDbContext(string[] args)
         {
-            var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+            var builder = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false)
+                .AddJsonFile("appsettings.Development.json", optional: true)
+                .AddEnvironmentVariables();
             var configuration = builder.Build();
             var connectionString = configuration.GetConnectionString("PostgresBoardDb");
 

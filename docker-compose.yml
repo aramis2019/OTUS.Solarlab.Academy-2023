@@ -1,5 +1,8 @@
 version: '3.7'
 
+# Секреты берутся из переменных окружения или файла .env рядом с этим файлом
+# (см. .env.example). Файл .env в репозиторий не коммитится.
+
 services:
 
   api:
@@ -10,7 +13,8 @@ services:
     ports:
       - 5000:80
     environment:
-      - ConnectionStrings__PostgresBoardDb=Server=postgres;Database=Board;Username=postgres;Password=password;Port=5432
+      - ConnectionStrings__PostgresBoardDb=Server=postgres;Database=Board;Username=postgres;Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set};Port=5432
+      - Jwt__Key=${JWT_KEY:?JWT_KEY is not set}
     networks:
       - solarlab-academy-network
     depends_on:
@@ -22,7 +26,7 @@ services:
       context: .
       dockerfile: src/Board/Host/Board.Host.DbMigrator/Dockerfile
     environment:
-      - ConnectionStrings__PostgresBoardDb=Server=postgres;Database=Board;Username=postgres;Password=password;Port=5432
+      - ConnectionStrings__PostgresBoardDb=Server=postgres;Database=Board;Username=postgres;Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set};Port=5432
     networks:
       - solarlab-academy-network
     depends_on:
@@ -33,7 +37,10 @@ services:
     image: adminer
     restart: always
     ports:
-      - 8080:8080
+      # Только с локальной машины (на сервере — через SSH-туннель).
+      - "127.0.0.1:8080:8080"
+    networks:
+      - solarlab-academy-network
     depends_on:
       - "postgres"
 
@@ -43,11 +50,12 @@ services:
     environment:
       POSTGRES_DB: "Board"
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set}
     volumes:
       - pg-data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      # Только с локальной машины, наружу БД не публикуется.
+      - "127.0.0.1:5432:5432"
     networks:
       - solarlab-academy-network
   

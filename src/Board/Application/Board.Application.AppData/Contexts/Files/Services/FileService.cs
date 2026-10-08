@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Board.Application.AppData.Common;
 using Board.Application.AppData.Contexts.Files.Repositories;
 using Board.Contracts.File;
 
@@ -9,20 +10,33 @@ namespace Board.Application.AppData.Contexts.Files.Services
     {
         private readonly IFileRepository _fileRepository;
         private readonly IMapper _mapper;
+        private readonly ICurrentUserAccessor _currentUserAccessor;
 
         /// <summary>
         /// Инициализация экземпляра <see cref="FileService"/>.
         /// </summary>        
-        public FileService(IFileRepository fileRepository, IMapper mapper)
+        public FileService(IFileRepository fileRepository, IMapper mapper, ICurrentUserAccessor currentUserAccessor)
         {
             _fileRepository = fileRepository;
             _mapper = mapper;
+            _currentUserAccessor = currentUserAccessor;
         }
 
         /// <inheritdoc/>
-        public Task DeleteAsync(Guid id, CancellationToken cancellationToken)
+        public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
         {
-            return _fileRepository.DeleteAsync(id, cancellationToken);
+            var file = await _fileRepository.FindByIdAsync(id, cancellationToken);
+            if (file == null)
+            {
+                return;
+            }
+
+            if (file.AccountId == null || file.AccountId != _currentUserAccessor.GetCurrentAccountId())
+            {
+                throw new UnauthorizedAccessException("Удалить файл может только тот, кто его загрузил.");
+            }
+
+            await _fileRepository.DeleteAsync(file, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -41,6 +55,7 @@ namespace Board.Application.AppData.Contexts.Files.Services
         public Task<Guid> UploadAsync(FileDto model, CancellationToken cancellationToken)
         {
             var file = _mapper.Map<FileDto, Domain.Files.File>(model);
+            file.AccountId = _currentUserAccessor.GetCurrentAccountId();
             return _fileRepository.UploadAsync(file, cancellationToken);
         }
     }

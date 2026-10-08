@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 using AutoMapper;
-using Board.Application.AppData.Contexts.Adverts.Repositories;
+using Board.Application.AppData.Contexts.Accounts.Repositories;
 using Board.Infrastucture.Repository;
 using Microsoft.EntityFrameworkCore;
 

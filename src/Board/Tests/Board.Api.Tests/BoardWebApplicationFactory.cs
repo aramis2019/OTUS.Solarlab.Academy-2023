@@ -1,4 +1,10 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
+using Board.Contracts.Account;
 using Board.Infrastucture.DataAccess;
 using Board.Infrastucture.DataAccess.Interfaces;
 using Microsoft.AspNetCore.Hosting;
@@ -13,8 +19,12 @@ namespace Board.Api.Tests
     /// </summary>
     public class BoardWebApplicationFactory : WebApplicationFactory<Program>
     {
+        public const string TestJwtKey = "test-jwt-signing-key-at-least-32-bytes-long";
+
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            builder.UseSetting("Jwt:Key", TestJwtKey);
+
             builder.ConfigureServices(services =>
             {
                 var descriptor =
@@ -32,6 +42,26 @@ namespace Board.Api.Tests
                 db.Database.EnsureCreated();
                 DataSeedHelper.InitializeDbForTests(db);
             });
+        }
+
+        /// <summary>
+        /// Зарегистрировать нового пользователя и получить клиент с его JWT.
+        /// </summary>
+        public async Task<HttpClient> CreateAuthorizedClientAsync()
+        {
+            var client = CreateClient();
+            var login = $"user_{Guid.NewGuid():N}".Substring(0, 20);
+            const string password = "P@ssw0rd!";
+
+            var registerResponse = await client.PostAsJsonAsync("Account/register", new CreateAccountDto { Login = login, Password = password });
+            registerResponse.EnsureSuccessStatusCode();
+
+            var loginResponse = await client.PostAsJsonAsync("Account/login", new LoginAccountDto { Login = login, Password = password });
+            loginResponse.EnsureSuccessStatusCode();
+            var token = await loginResponse.Content.ReadAsStringAsync();
+
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Trim('"'));
+            return client;
         }
 
         /// <summary>

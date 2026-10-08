@@ -1,6 +1,7 @@
 ﻿using Board.Application.AppData.Contexts.Files.Services;
 using Board.Contracts;
 using Board.Contracts.File;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -12,6 +13,7 @@ namespace Board.Host.Api.Controllers;
 /// <response code="500">Произошла внутренняя ошибка.</response>
 [ApiController]
 [Route("[controller]")]
+[Authorize]
 [Produces("application/json")]
 [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status500InternalServerError)]
 public class FileController : ControllerBase
@@ -39,6 +41,7 @@ public class FileController : ControllerBase
     /// <response code="404">Файл с указанным идентификатором не найден.</response>
     /// <returns>Информация о файле.</returns>
     [HttpGet("{id}/info")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(FileInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetInfoById(Guid id, CancellationToken cancellationToken)
@@ -81,6 +84,7 @@ public class FileController : ControllerBase
     /// <response code="404">Файл с указанным идентификатором не найден.</response>
     /// <returns>Файл в виде потока.</returns>
     [HttpGet("{id}")]
+    [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Download(Guid id, CancellationToken cancellationToken)

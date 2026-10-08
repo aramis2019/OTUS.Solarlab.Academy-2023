@@ -56,4 +56,9 @@ public class Advert
     /// Категория.
     /// </summary>
     public virtual Category Category { get; set; }
+
+    /// <summary>
+    /// Идентификатор аккаунта автора (null у объявлений, созданных до появления авторства).
+    /// </summary>
+    public Guid? AccountId { get; set; }
 }
