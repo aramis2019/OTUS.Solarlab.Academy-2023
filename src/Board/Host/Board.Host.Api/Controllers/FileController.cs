@@ -1,8 +1,11 @@
 ﻿using Board.Application.AppData.Contexts.Files.Services;
 using Board.Contracts;
+using Board.Host.Api.Extensions;
 using Board.Contracts.File;
+using Board.Host.Api.Options;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
+using Microsoft.Extensions.Options;
 
 namespace Board.Host.Api.Controllers;
 
@@ -12,22 +15,26 @@ namespace Board.Host.Api.Controllers;
 /// <response code="500">Произошла внутренняя ошибка.</response>
 [ApiController]
 [Route("[controller]")]
+[Authorize]
 [Produces("application/json")]
 [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status500InternalServerError)]
 public class FileController : ControllerBase
 {
     private readonly ILogger<FileController> _logger;
     private readonly IFileService _fileService;
+    private readonly FileUploadOptions _uploadOptions;
 
     /// <summary>
     /// Инициализирует экземпляр <see cref="FileController"/>
     /// </summary>
     /// <param name="fileService">Сервис работы с файлами.</param>
     /// <param name="logger">Сервис логирования.</param>
-    public FileController(IFileService fileService, ILogger<FileController> logger)
+    /// <param name="uploadOptions">Ограничения на загрузку файлов.</param>
+    public FileController(IFileService fileService, ILogger<FileController> logger, IOptions<FileUploadOptions> uploadOptions)
     {
         _logger = logger;
         _fileService = fileService;
+        _uploadOptions = uploadOptions.Value;
     }
 
     /// <summary>
@@ -38,13 +45,14 @@ public class FileController : ControllerBase
     /// <response code="200">Запрос выполнен успешно.</response>
     /// <response code="404">Файл с указанным идентификатором не найден.</response>
     /// <returns>Информация о файле.</returns>
-    [HttpGet("{id}/info")]
+    [HttpGet("{id:Guid}/info")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(FileInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetInfoById(Guid id, CancellationToken cancellationToken)
     {
         var result = await _fileService.GetInfoByIdAsync(id, cancellationToken);
-        return result == null ? NotFound() : Ok(result);
+        return Ok(result);
     }
 
     /// <summary>
@@ -53,14 +61,29 @@ public class FileController : ControllerBase
     /// <param name="file">Файл.</param>
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <response code="201">Файл успешно загружен.</response>
-    /// <response code="400">Модель данных запроса невалидна.</response>
+    /// <response code="400">Файл не передан или пустой.</response>
+    /// <response code="413">Файл превышает допустимый размер.</response>
     [HttpPost]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status400BadRequest)]
-    [RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = long.MaxValue)]
-    [DisableRequestSizeLimit]
+    [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status413PayloadTooLarge)]
     public async Task<IActionResult> Upload(IFormFile file, CancellationToken cancellationToken)
     {
+        if (file.Length == 0)
+        {
+            ModelState.AddModelError(nameof(file), "Файл пустой.");
+            return this.InvalidModelState();
+        }
+
+        if (file.Length > _uploadOptions.MaxFileSizeBytes)
+        {
+            return StatusCode(StatusCodes.Status413PayloadTooLarge, new ErrorDto
+            {
+                ErrorCode = "file_too_large",
+                UserMessage = $"Размер файла превышает допустимые {_uploadOptions.MaxFileSizeBytes / 1024} КБ."
+            });
+        }
+
         var bytes = await GetBytesAsync(file, cancellationToken);
         var fileDto = new FileDto
         {
@@ -69,7 +92,7 @@ public class FileController : ControllerBase
             Name = file.FileName
         };
         var result = await _fileService.UploadAsync(fileDto, cancellationToken);
-        return StatusCode((int)HttpStatusCode.Created, result);
+        return CreatedAtAction(nameof(GetInfoById), new { id = result }, result);
     }
 
     /// <summary>
@@ -80,17 +103,13 @@ public class FileController : ControllerBase
     /// <response code="200">Запрос выполнен успешно.</response>
     /// <response code="404">Файл с указанным идентификатором не найден.</response>
     /// <returns>Файл в виде потока.</returns>
-    [HttpGet("{id}")]
+    [HttpGet("{id:Guid}")]
+    [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Download(Guid id, CancellationToken cancellationToken)
     {
         var result = await _fileService.DownloadAsync(id, cancellationToken);
-
-        if (result == null) 
-        { 
-            return NotFound(); 
-        }
 
         Response.ContentLength = result.Content.Length;
         return File(result.Content, result.ContentType, result.Name, true);
@@ -104,7 +123,7 @@ public class FileController : ControllerBase
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <response code="403">Доступ запрещён.</response>
     /// <response code="404">Файл с указанным идентификатором не найден.</response>
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:Guid}")]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)

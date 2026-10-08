@@ -41,12 +41,15 @@ namespace Board.Host.DbMigrator.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<string>("Password")
+                    b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Login")
+                        .IsUnique();
 
                     b.ToTable("Account");
                 });
@@ -55,6 +58,9 @@ namespace Board.Host.DbMigrator.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AccountId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Address")
@@ -89,6 +95,8 @@ namespace Board.Host.DbMigrator.Migrations
                         .HasColumnType("numeric");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
 
                     b.HasIndex("CategoryId");
 
@@ -126,6 +134,9 @@ namespace Board.Host.DbMigrator.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("AccountId")
+                        .HasColumnType("uuid");
+
                     b.Property<byte[]>("Content")
                         .HasColumnType("bytea");
 
@@ -147,11 +158,18 @@ namespace Board.Host.DbMigrator.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AccountId");
+
                     b.ToTable("File");
                 });
 
             modelBuilder.Entity("Board.Domain.Adverts.Advert", b =>
                 {
+                    b.HasOne("Board.Domain.Account.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Board.Domain.Categories.Category", "Category")
                         .WithMany("Adverts")
                         .HasForeignKey("CategoryId")
@@ -159,6 +177,14 @@ namespace Board.Host.DbMigrator.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("Board.Domain.Files.File", b =>
+                {
+                    b.HasOne("Board.Domain.Account.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Board.Domain.Categories.Category", b =>

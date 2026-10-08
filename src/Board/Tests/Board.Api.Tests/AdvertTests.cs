@@ -7,7 +7,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Board.Contracts.Advert;
 using Board.Domain.Adverts;
-using Newtonsoft.Json;
 using Xunit;
 
 namespace Board.Api.Tests
@@ -50,7 +49,7 @@ namespace Board.Api.Tests
         public async Task Advert_Add_Success()
         {
             // Arrange
-            var httpClient = _webApplicationFactory.CreateClient();
+            var httpClient = await _webApplicationFactory.CreateAuthorizedClientAsync();
 
             CreateAdvertDto model = new CreateAdvertDto
             {
@@ -62,8 +61,7 @@ namespace Board.Api.Tests
 
 
             // Act
-            HttpContent content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync("Advert", content);
+            var response = await httpClient.PostAsJsonAsync("Advert", model);
 
             // Assert
             Assert.NotNull(response);
@@ -83,6 +81,24 @@ namespace Board.Api.Tests
             Assert.Equal(model.Description, advert.Description);
             Assert.Equal(model.Address, advert.Address);
             Assert.True(advert.IsActive);
+            Assert.NotNull(advert.AccountId);
+        }
+
+        [Fact]
+        public async Task Advert_Add_Unauthorized()
+        {
+            var httpClient = _webApplicationFactory.CreateClient();
+            var model = new CreateAdvertDto
+            {
+                Name = "test_name",
+                Description = "test_description",
+                CategoryId = DataSeedHelper.TestCategoryId,
+                Address = "some_city"
+            };
+
+            var response = await httpClient.PostAsJsonAsync("Advert", model);
+
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
     }
 }

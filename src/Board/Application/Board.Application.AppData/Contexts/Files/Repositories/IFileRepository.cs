@@ -13,7 +13,7 @@ namespace Board.Application.AppData.Contexts.Files.Repositories
         /// <param name="id">Идентификатор файла.</param>
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns>Информация о файле.</returns>
-        Task<FileInfoDto> GetInfoByIdAsync(Guid id, CancellationToken cancellationToken);
+        Task<FileInfoDto?> GetInfoByIdAsync(Guid id, CancellationToken cancellationToken);
 
         /// <summary>
         /// Загрузка файла в систему.
@@ -29,13 +29,21 @@ namespace Board.Application.AppData.Contexts.Files.Repositories
         /// <param name="id">Идентификатор файла.</param>
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns>Информация о скачиваемом файле.</returns>
-        Task<FileDto> DownloadAsync(Guid id, CancellationToken cancellationToken);
+        Task<FileDto?> DownloadAsync(Guid id, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Удаление файла по его идентификатору.
+        /// Найти сущность файла по идентификатору.
         /// </summary>
         /// <param name="id">Идентификатор файла.</param>
-        /// <param name="cancellationToken">Токен отмены.</param>        
-        Task DeleteAsync(Guid id, CancellationToken cancellationToken);
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>Файл или null, если не найден.</returns>
+        Task<Domain.Files.File?> FindByIdAsync(Guid id, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Удаление файла.
+        /// </summary>
+        /// <param name="file">Файл.</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        Task DeleteAsync(Domain.Files.File file, CancellationToken cancellationToken);
     }
 }

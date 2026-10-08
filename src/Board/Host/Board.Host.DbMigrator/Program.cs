@@ -1,3 +1,4 @@
+﻿using Board.Application.AppData.Contexts.Accounts.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Board.Host.DbMigrator
@@ -10,8 +11,8 @@ namespace Board.Host.DbMigrator
             {
                 services.AddServices(hostContext.Configuration);
             }).Build();
+            // Применяем миграции и завершаемся: держать контейнер мигратора запущенным незачем.
             await MigrateDatabaseAsync(host.Services);
-            await host.RunAsync();
         }
 
         private static async Task MigrateDatabaseAsync(IServiceProvider serviceProvider)
@@ -19,6 +20,10 @@ namespace Board.Host.DbMigrator
             using var scope = serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<MigrationDbContext>();
             await context.Database.MigrateAsync();
+
+            var hashed = await LegacyPasswordHasher.HashPlainTextPasswordsAsync(context, new Pbkdf2PasswordHasher());
+            scope.ServiceProvider.GetRequiredService<ILogger<Program>>()
+                .LogInformation("Захешировано паролей, хранившихся в открытом виде: {Count}", hashed);
         }
     }
 }

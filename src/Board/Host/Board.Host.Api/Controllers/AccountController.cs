@@ -1,12 +1,10 @@
-﻿using Board.Application.AppData.Contexts.Adverts.Services;
+﻿using Board.Application.AppData.Contexts.Accounts.Services;
 using Board.Contracts;
 using Board.Contracts.Account;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using System.Threading;
+using Microsoft.AspNetCore.RateLimiting;
+using Board.Host.Api.Options;
 
 namespace Board.Host.Api.Controllers;
 
@@ -16,7 +14,6 @@ namespace Board.Host.Api.Controllers;
 /// <response code="500">Произошла внутренняя ошибка.</response>
 [ApiController]
 [Route("[controller]")]
-[AllowAnonymous]
 [Produces("application/json")]
 [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status500InternalServerError)]
 public class AccountController : ControllerBase
@@ -41,19 +38,21 @@ public class AccountController : ControllerBase
     /// <param name="cancellation">Токен отмены.</param>
     /// <response code="201">Аккаунт успешно зарегистрирован.</response>
     /// <response code="400">Модель данных запроса невалидна.</response>
-    /// <response code="422">Произошёл конфликт бизнес-логики.</response>
-    /// <returns>Модель зарегистрированного аккаунта.</returns>
+    /// <response code="422">Пользователь с таким логином уже зарегистрирован.</response>
+    /// <response code="429">Слишком много запросов с этого IP-адреса.</response>
+    /// <returns>Идентификатор зарегистрированного аккаунта.</returns>
     [HttpPost("register")]
-    [ProducesResponseType(typeof(AccountDto), StatusCodes.Status201Created)]
+    [AllowAnonymous]
+    [EnableRateLimiting(AuthRateLimitOptions.PolicyName)]
+    [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(typeof(Guid), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> RegisterAccount([FromBody] CreateAccountDto dto, CancellationToken cancellation)
     {
         _logger.LogInformation("Регистрация нового аккаунта.");
-
-        var result = await _accountService.RegisterAccountAsync (dto, cancellation); 
-        
-        return await Task.Run(() => CreatedAtAction(nameof(Login), result), cancellation);
+        var result = await _accountService.RegisterAccountAsync(dto, cancellation);
+        return StatusCode(StatusCodes.Status201Created, result);
     }
 
     /// <summary>
@@ -63,41 +62,37 @@ public class AccountController : ControllerBase
     /// <param name="cancellation">Токен отмены.</param>
     /// <response code="200">Запрос выполнен успешно</response>
     /// <response code="400">Модель данных запроса невалидна.</response>
-    /// <response code="403">Доступ запрещён (пользователь заблокирован).</response>
-    /// <response code="404">Пользователь не найден.</response>
-    /// <returns>Модель с данными входа.</returns>
+    /// <response code="401">Неверный логин или пароль.</response>
+    /// <response code="429">Слишком много запросов с этого IP-адреса.</response>
+    /// <returns>Модель с JWT для заголовка Authorization.</returns>
     [HttpPost("login")]
+    [AllowAnonymous]
+    [EnableRateLimiting(AuthRateLimitOptions.PolicyName)]
+    [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(LoginResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginAccountDto dto, CancellationToken cancellation)
     {
         _logger.LogInformation("Вход в аккаунт.");
-
         var result = await _accountService.LoginAsync(dto, cancellation);
-
-        return await Task.Run(() => Ok(result), cancellation);
+        return Ok(result);
     }
 
-    [HttpPost("logout")]
-    public async Task Logout(string token)
-    {
-        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-    }
-
-    [HttpPost("GetUserInfo")]
-    public async Task<AccountDto> GetUserInfo(CancellationToken cancellation)
+    /// <summary>
+    /// Получить информацию о текущем пользователе.
+    /// </summary>
+    /// <param name="cancellation">Токен отмены.</param>
+    /// <response code="200">Запрос выполнен успешно.</response>
+    /// <response code="401">Пользователь не аутентифицирован.</response>
+    /// <returns>Модель текущего аккаунта.</returns>
+    [HttpGet("current")]
+    [Authorize]
+    [ProducesResponseType(typeof(AccountDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetCurrent(CancellationToken cancellation)
     {
         var result = await _accountService.GetCurrentAsync(cancellation);
-
-        return result;
-
-        //    new AccountDto
-        //{
-        //    Scheme = HttpContext.User.Identity.AuthenticationType,
-        //    IsAuthenticated = HttpContext.User.Identity.IsAuthenticated,
-        //    Claims = HttpContext.User.Claims.ToList()
-        //};
+        return Ok(result);
     }
 }

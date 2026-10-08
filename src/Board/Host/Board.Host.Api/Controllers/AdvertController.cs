@@ -1,9 +1,10 @@
 ﻿using Board.Application.AppData.Contexts.Adverts.Services;
 using Board.Contracts;
 using Board.Contracts.Advert;
-using Microsoft.AspNetCore.JsonPatch;
+using Board.Host.Api.Extensions;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 
 namespace Board.Host.Api.Controllers;
 
@@ -13,6 +14,7 @@ namespace Board.Host.Api.Controllers;
 /// <response code="500">Произошла внутренняя ошибка.</response>
 [ApiController]
 [Route("[controller]")]
+[Authorize]
 [Produces("application/json")]
 [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status500InternalServerError)]
 public class AdvertController : ControllerBase
@@ -32,17 +34,21 @@ public class AdvertController : ControllerBase
     }
 
     /// <summary>
-    /// Получить список объявлений.
+    /// Получить страницу активных объявлений, от новых к старым.
     /// </summary>
+    /// <param name="page">Параметры страницы: skip (по умолчанию 0) и take (по умолчанию 20, максимум 100).</param>
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <response code="200">Запрос выполнен успешно</response>
+    /// <response code="400">Некорректные параметры страницы.</response>
     /// <returns>Список моделей объявлений.</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<AdvertShortInfoDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(AdvertShortInfoDto[]), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetAll([FromQuery] PageRequestDto page, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Запрос списка объявлений");
-        var result = await _advertService.GetAll(cancellationToken);
+        _logger.LogInformation("Запрос списка объявлений: skip={Skip}, take={Take}", page.Skip, page.Take);
+        var result = await _advertService.GetAll(page, cancellationToken);
         return Ok(result);
     }
 
@@ -55,18 +61,13 @@ public class AdvertController : ControllerBase
     /// <response code="404">Объявление с указанным идентификатором не найдено.</response>
     /// <returns>Модель объявления.</returns>
     [HttpGet("{id:Guid}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(AdvertInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         _logger.LogInformation($"Запрос объявления по идентификатору: {id}");
         var result = await _advertService.Get(id, cancellationToken);
-
-        if (result == null)
-        {
-            return NotFound();
-        }
-
         return Ok(result);
     }
 
@@ -83,12 +84,11 @@ public class AdvertController : ControllerBase
     [ProducesResponseType(typeof(AdvertInfoDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status422UnprocessableEntity)]
-    // [Authorize]
     public async Task<IActionResult> Create([FromBody] CreateAdvertDto dto, CancellationToken cancellationToken)
     {
-        _logger.LogInformation($"Запрос на создание объявления: {JsonConvert.SerializeObject(dto)}");
+        _logger.LogInformation("Запрос на создание объявления {Name}", dto.Name);
         var result = await _advertService.Add(dto, cancellationToken);
-        return CreatedAtAction(nameof(Create), new { result.Id });
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     /// <summary>
@@ -111,8 +111,9 @@ public class AdvertController : ControllerBase
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAdvertDto dto, CancellationToken cancellationToken)
     {
-        // TODO NotImplemented
-        return await Task.Run(() => Ok(new AdvertInfoDto()), cancellationToken);
+        _logger.LogInformation("Запрос на обновление объявления {Id}", id);
+        var result = await _advertService.Update(id, dto, cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>
@@ -136,8 +137,17 @@ public class AdvertController : ControllerBase
     public async Task<IActionResult> Patch(Guid id, [FromBody] JsonPatchDocument<UpdateAdvertDto> dto,
         CancellationToken cancellationToken)
     {
-        // TODO NotImplemented
-        return await Task.Run(() => Ok(new AdvertInfoDto()), cancellationToken);
+        _logger.LogInformation("Запрос на частичное обновление объявления {Id}", id);
+        var model = await _advertService.GetForUpdate(id, cancellationToken);
+
+        dto.ApplyTo(model, error => ModelState.AddModelError(error.Operation.path ?? string.Empty, error.ErrorMessage));
+        if (!ModelState.IsValid || !TryValidateModel(model))
+        {
+            return this.InvalidModelState();
+        }
+
+        var result = await _advertService.Update(id, model, cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>

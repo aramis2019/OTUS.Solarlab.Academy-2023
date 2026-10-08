@@ -21,9 +21,9 @@
         public string Login { get; set; }
         
         /// <summary>
-        /// Пароль.
+        /// Хеш пароля (PBKDF2, вместе с солью и числом итераций).
         /// </summary>
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
 
         /// <summary>
         /// Дата регистрации.

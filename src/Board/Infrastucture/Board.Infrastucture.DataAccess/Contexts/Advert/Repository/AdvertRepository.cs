@@ -21,9 +21,11 @@ public class AdvertRepository : IAdvertRepository
         _mapper = mapper;
     }
 
-    public Task<AdvertShortInfoDto[]> GetAll(CancellationToken cancellationToken)
+    public Task<AdvertShortInfoDto[]> GetAll(int skip, int take, CancellationToken cancellationToken)
     {
         return _repository.GetAll().Where(s => s.IsActive)
+            .OrderByDescending(s => s.Created).ThenBy(s => s.Id)
+            .Skip(skip).Take(take)
             .ProjectTo<AdvertShortInfoDto>(_mapper.ConfigurationProvider)
             .ToArrayAsync(cancellationToken);
     }
@@ -35,22 +37,24 @@ public class AdvertRepository : IAdvertRepository
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public async Task<AdvertInfoDto> Add(Advert entity, CancellationToken cancellationToken)
+    public Task Add(Advert entity, CancellationToken cancellationToken)
     {
         entity.Created = DateTime.UtcNow;
-        await _repository.AddAsync(entity, cancellationToken);
-        return _mapper.Map<AdvertInfoDto>(entity);
+        return _repository.AddAsync(entity, cancellationToken);
     }
 
-    public async Task Delete(Guid id, CancellationToken cancellationToken)
+    public Task Update(Advert entity, CancellationToken cancellationToken)
     {
-        var entity = await _repository.GetAll().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return _repository.UpdateAsync(entity, cancellationToken);
+    }
 
-        if (entity == null)
-        {
-            return;
-        }
+    public Task<Advert> FindById(Guid id, CancellationToken cancellationToken)
+    {
+        return _repository.GetByIdAsync(id, cancellationToken);
+    }
 
-        await _repository.DeleteAsync(entity, cancellationToken);
+    public Task Delete(Advert entity, CancellationToken cancellationToken)
+    {
+        return _repository.DeleteAsync(entity, cancellationToken);
     }
 }

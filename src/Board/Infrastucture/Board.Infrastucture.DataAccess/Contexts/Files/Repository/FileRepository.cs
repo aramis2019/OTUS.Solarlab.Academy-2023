@@ -23,15 +23,14 @@ namespace Board.Infrastucture.DataAccess.Contexts.Files.Repository
         }
 
         /// <inheritdoc/>
-        public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
+        public Task<Domain.Files.File> FindByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            var file = await _repository.GetByIdAsync(id, cancellationToken);
-            if (file == null)
-            {
-                return;
-            }
+            return _repository.GetByIdAsync(id, cancellationToken);
+        }
 
-            await _repository.DeleteAsync(file, cancellationToken);
+        public Task DeleteAsync(Domain.Files.File file, CancellationToken cancellationToken)
+        {
+            return _repository.DeleteAsync(file, cancellationToken);
         }
 
         /// <inheritdoc/>

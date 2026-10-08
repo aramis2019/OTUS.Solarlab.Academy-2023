@@ -1,7 +1,7 @@
 ﻿using Board.Contracts.Account;
 using Board.Domain.Account;
 
-namespace Board.Application.AppData.Contexts.Adverts.Services;
+namespace Board.Application.AppData.Contexts.Accounts.Services;
 
 /// <summary>
 /// Сервис для регистриции\авторизации пользователя.
@@ -24,7 +24,7 @@ public interface IAccountService
     /// <param name="possword">Пароль.</param>
     /// <param name="cancellation">Токен отмены.</param>
     /// <returns>Токен.</returns>
-    Task<string> LoginAsync(LoginAccountDto accountDto, CancellationToken cancellation);
+    Task<LoginResultDto> LoginAsync(LoginAccountDto accountDto, CancellationToken cancellation);
 
     /// <summary>
     /// Получение текущего пользователя.

@@ -1,34 +1,49 @@
-﻿using Board.Contracts.Category;
+using Board.Contracts.Category;
 using Board.Domain.Categories;
 
 namespace Board.Application.AppData.Contexts.Categories.Repositories
 {
     /// <summary>
-    /// Репозиторий для работы с категориями.
+    /// Репозиторий категорий.
     /// </summary>
     public interface ICategoryRepository
     {
         /// <summary>
-        /// Создание категории.
+        /// Добавить категорию.
         /// </summary>
-        /// <param name="model">Модель категории.</param>
-        /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns>Идентификатор созданной категории.</returns>
         Task<Guid> AddAsync(Category model, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Получение по идентификатору.
+        /// Получить модель категории по идентификатору.
         /// </summary>
-        /// <param name="id">Идентификатор категории.</param>
-        /// <param name="cancellationToken">Токен отмены.</param>
-        /// <returns>Информация о категории.</returns>
-        Task<CategoryInfoDto> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+        /// <returns>Модель категории или null, если не найдена.</returns>
+        Task<CategoryInfoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Получение списка активных категорий.
+        /// Получить список активных категорий.
         /// </summary>
-        /// <param name="cancellationToken">Токен отмены.</param>
-        /// <returns>Список активных категорий.</returns>
         Task<List<Category>> GetActiveAsync(CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Найти сущность категории по идентификатору.
+        /// </summary>
+        /// <returns>Категория или null, если не найдена.</returns>
+        Task<Category?> FindById(Guid id, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Проверить, есть ли у категории дочерние категории или объявления.
+        /// </summary>
+        Task<bool> IsInUseAsync(Guid id, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Сохранить изменения категории.
+        /// </summary>
+        Task UpdateAsync(Category model, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Удалить категорию.
+        /// </summary>
+        Task DeleteAsync(Category model, CancellationToken cancellationToken);
     }
 }

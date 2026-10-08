@@ -1,4 +1,5 @@
-﻿using Board.Contracts.Advert;
+using Board.Contracts;
+using Board.Contracts.Advert;
 
 namespace Board.Application.AppData.Contexts.Adverts.Services;
 
@@ -8,33 +9,40 @@ namespace Board.Application.AppData.Contexts.Adverts.Services;
 public interface IAdvertService
 {
     /// <summary>
-    /// Получить список объявлений.
+    /// Получить страницу активных объявлений, от новых к старым.
     /// </summary>
-    /// <param name="cancellationToken">Токен отмены операции.</param>
-    /// <returns>Список объявлений.</returns>
-    Task<AdvertShortInfoDto[]> GetAll(CancellationToken cancellationToken);
+    Task<AdvertShortInfoDto[]> GetAll(PageRequestDto page, CancellationToken cancellationToken);
 
     /// <summary>
     /// Получить объявление по идентификатору.
     /// </summary>
-    /// <param name="id">Идентификатор объявления.</param>
-    /// <param name="cancellationToken">Токен отмены операции.</param>
-    /// <returns>Модель объявления.</returns>
+    /// <exception cref="Common.Exceptions.EntityNotFoundException">Объявление не найдено.</exception>
     Task<AdvertInfoDto> Get(Guid id, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Создает объявление.
+    /// Создать объявление от имени текущего пользователя.
     /// </summary>
-    /// <param name="dto">Модель создания объявления.</param>
-    /// <param name="cancellation">Токен отмены операции.</param>
-    /// <returns>Модель созданного объявления.</returns>
-    Task<AdvertInfoDto> Add(CreateAdvertDto dto, CancellationToken cancellation);
+    /// <exception cref="Common.Exceptions.BusinessRuleException">Категория не существует.</exception>
+    Task<AdvertInfoDto> Add(CreateAdvertDto dto, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Удалить объявление.
+    /// Получить модель для редактирования объявления (например, для частичного обновления).
     /// </summary>
-    /// <param name="id">Идентификатор объявления.</param>
-    /// <param name="cancellationToken">Токен отмены операции.</param>
-    /// <returns></returns>
+    /// <exception cref="Common.Exceptions.EntityNotFoundException">Объявление не найдено.</exception>
+    /// <exception cref="Common.Exceptions.AccessDeniedException">Текущий пользователь не автор объявления.</exception>
+    Task<UpdateAdvertDto> GetForUpdate(Guid id, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Обновить объявление.
+    /// </summary>
+    /// <exception cref="Common.Exceptions.EntityNotFoundException">Объявление не найдено.</exception>
+    /// <exception cref="Common.Exceptions.AccessDeniedException">Текущий пользователь не автор объявления.</exception>
+    /// <exception cref="Common.Exceptions.BusinessRuleException">Категория не существует.</exception>
+    Task<AdvertInfoDto> Update(Guid id, UpdateAdvertDto dto, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Удалить объявление. Удаление несуществующего объявления ничего не делает.
+    /// </summary>
+    /// <exception cref="Common.Exceptions.AccessDeniedException">Текущий пользователь не автор объявления.</exception>
     Task Delete(Guid id, CancellationToken cancellationToken);
 }

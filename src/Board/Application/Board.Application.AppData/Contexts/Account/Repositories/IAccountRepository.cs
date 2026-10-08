@@ -1,12 +1,10 @@
-﻿using Board.Contracts.Advert;
-using Board.Domain.Account;
+﻿using Board.Domain.Account;
 using System.Linq.Expressions;
-using System.Threading;
 
-namespace Board.Application.AppData.Contexts.Adverts.Repositories;
+namespace Board.Application.AppData.Contexts.Accounts.Repositories;
 
 /// <summary>
-/// Репозиторий для работы с объявлениями.
+/// Репозиторий для работы с аккаунтами.
 /// </summary>
 public interface IAccountRepository
 {
