@@ -22,11 +22,5 @@ namespace Board.Contracts.Account
         [Required(ErrorMessage = "Пароль не указан")]
         [StringLength(32, MinimumLength = 8)]
         public string Password { get; set; }
-
-        /// <summary>
-        /// Электронный адрес.
-        /// </summary>
-        [RegularExpression(@"^.+\@.+\..+$")]
-        public string Email { get; set; }
     }
 }

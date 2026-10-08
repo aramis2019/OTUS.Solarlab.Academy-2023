@@ -34,14 +34,14 @@ public class CategoryController : ControllerBase
     }
 
     /// <summary>
-    /// Получить список категорий.
+    /// Получить список активных категорий (то же, что GET /Category/active).
     /// </summary>
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <response code="200">Запрос выполнен успешно</response>
     /// <returns>Список моделей категорий.</returns>
     [HttpGet]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(IEnumerable<CategoryShortInfoDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CategoryInfoDto[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Запрос категорий");
@@ -73,8 +73,7 @@ public class CategoryController : ControllerBase
     /// </summary>
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <response code="200">Запрос выполнен успешно.</response>
-    /// <response code="404">Категория с указанным идентификатором не найдена.</response>
-    /// <returns>Модель категории.</returns>
+    /// <returns>Список моделей категорий.</returns>
     [HttpGet("active")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(CategoryInfoDto[]), StatusCodes.Status200OK)]
