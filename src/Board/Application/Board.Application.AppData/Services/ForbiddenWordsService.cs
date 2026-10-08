@@ -1,16 +1,14 @@
-﻿using Board.Contracts.Interfaces;
+using Board.Contracts.Interfaces;
 
 namespace Board.Application.AppData.Services
 {
-    /// <summary>
-    /// Реализация <see cref="IForbiddenWordsService"/>
-    /// </summary>
+    /// <inheritdoc />
     public class ForbiddenWordsService : IForbiddenWordsService
     {
         /// <inheritdoc />
-        public string[] GetForbiddenWords()
+        public string[] GetForbiddenWordStems()
         {
-            return new[] { "дурак", "реклама", "взятка" };
+            return new[] { "дурак", "реклам", "взятк" };
         }
     }
 }
