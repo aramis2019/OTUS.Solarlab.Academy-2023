@@ -24,4 +24,10 @@ public class HttpContextCurrentUserAccessor : ICurrentUserAccessor
         var claimId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
         return Guid.TryParse(claimId, out var id) ? id : null;
     }
+
+    /// <inheritdoc />
+    public bool IsAdmin()
+    {
+        return _httpContextAccessor.HttpContext?.User.IsInRole(Roles.Admin) ?? false;
+    }
 }

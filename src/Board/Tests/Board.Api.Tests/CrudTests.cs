@@ -116,7 +116,7 @@ namespace Board.Api.Tests
         [Fact]
         public async Task Category_Crud_Succeeds()
         {
-            var client = await _webApplicationFactory.CreateAuthorizedClientAsync();
+            var client = await _webApplicationFactory.CreateAdminClientAsync();
 
             var createResponse = await client.PostAsJsonAsync("Category", new CreateCategoryDto { Name = "Parent" });
             Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
@@ -147,7 +147,7 @@ namespace Board.Api.Tests
         [Fact]
         public async Task Category_Delete_WithAdverts_Returns422()
         {
-            var client = await _webApplicationFactory.CreateAuthorizedClientAsync();
+            var client = await _webApplicationFactory.CreateAdminClientAsync();
 
             var response = await client.DeleteAsync($"Category/{DataSeedHelper.TestCategoryId}");
 
@@ -157,7 +157,7 @@ namespace Board.Api.Tests
         [Fact]
         public async Task Category_Update_Cycle_Returns422()
         {
-            var client = await _webApplicationFactory.CreateAuthorizedClientAsync();
+            var client = await _webApplicationFactory.CreateAdminClientAsync();
             var aId = await (await client.PostAsJsonAsync("Category", new CreateCategoryDto { Name = "Cat A" })).Content.ReadFromJsonAsync<Guid>();
             var bId = await (await client.PostAsJsonAsync("Category", new CreateCategoryDto { Name = "Cat B", ParentId = aId })).Content.ReadFromJsonAsync<Guid>();
 
@@ -207,6 +207,37 @@ namespace Board.Api.Tests
             var response = await _webApplicationFactory.CreateClient().GetAsync(url);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Category_Create_ByRegularUser_Returns403()
+        {
+            var client = await _webApplicationFactory.CreateAuthorizedClientAsync();
+
+            var response = await client.PostAsJsonAsync("Category", new CreateCategoryDto { Name = "Not allowed" });
+
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+            Assert.Equal("forbidden", (await response.Content.ReadFromJsonAsync<ErrorDto>())!.ErrorCode);
+        }
+
+        [Fact]
+        public async Task Advert_Admin_CanModifyAnyAdvert_IncludingWithoutAuthor()
+        {
+            var author = await _webApplicationFactory.CreateAuthorizedClientAsync();
+            var admin = await _webApplicationFactory.CreateAdminClientAsync();
+            var created = await (await author.PostAsJsonAsync("Advert", NewAdvert(DataSeedHelper.TestCategoryId)))
+                .Content.ReadFromJsonAsync<AdvertInfoDto>();
+
+            var patchResponse = await admin.PatchAsync($"Advert/{created!.Id}", JsonPatch("/name", "moderated"));
+            var deleteResponse = await admin.DeleteAsync($"Advert/{created.Id}");
+
+            Assert.Equal(HttpStatusCode.OK, patchResponse.StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+            // Сидовое объявление создано без автора (как объявления до появления авторства).
+            var legacyPatch = await admin.PatchAsync($"Advert/{DataSeedHelper.TestAdvertId}",
+                JsonPatch("/description", "moderated description"));
+            Assert.Equal(HttpStatusCode.OK, legacyPatch.StatusCode);
         }
 
         private static UpdateAdvertDto NewAdvert(Guid categoryId) => new()

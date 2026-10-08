@@ -17,6 +17,7 @@ services:
       - ConnectionStrings__PostgresBoardDb=Server=postgres;Database=Board;Username=postgres;Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set};Port=5432
       - Jwt__Key=${JWT_KEY:?JWT_KEY is not set}
       - AutoMapper__LicenseKey=${AUTOMAPPER_LICENSE_KEY:-}
+      - Administration__AdminLogins__0=${ADMIN_LOGIN:-}
     networks:
       - solarlab-academy-network
     restart: unless-stopped

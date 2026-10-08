@@ -144,6 +144,29 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
     .Configure<IConfiguration>((options, configuration) =>
     {
         options.RequireHttpsMetadata = false;
+        // Ответы 401/403 от аутентификации — в том же формате ErrorDto, что и остальные ошибки.
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsJsonAsync(new ErrorDto
+                {
+                    ErrorCode = "unauthorized",
+                    UserMessage = "Требуется аутентификация."
+                });
+            },
+            OnForbidden = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return context.Response.WriteAsJsonAsync(new ErrorDto
+                {
+                    ErrorCode = "forbidden",
+                    UserMessage = "Недостаточно прав для выполнения операции."
+                });
+            }
+        };
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,

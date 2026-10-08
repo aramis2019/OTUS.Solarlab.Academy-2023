@@ -70,6 +70,12 @@ public class AccountService : IAccountService
             new Claim(ClaimTypes.Name, existingAccount.Login)
         };
 
+        var adminLogins = _configuration.GetSection("Administration:AdminLogins").GetChildren().Select(c => c.Value);
+        if (adminLogins.Contains(existingAccount.Login, StringComparer.OrdinalIgnoreCase))
+        {
+            claims.Add(new Claim(ClaimTypes.Role, Roles.Admin));
+        }
+
         var token = new JwtSecurityToken(
             issuer: _configuration["Jwt:Issuer"],
             audience: _configuration["Jwt:Audience"],

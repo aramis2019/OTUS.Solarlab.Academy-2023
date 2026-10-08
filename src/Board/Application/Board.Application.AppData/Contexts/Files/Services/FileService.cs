@@ -32,9 +32,9 @@ namespace Board.Application.AppData.Contexts.Files.Services
                 return;
             }
 
-            if (file.AccountId == null || file.AccountId != _currentUserAccessor.GetCurrentAccountId())
+            if (!_currentUserAccessor.CanModify(file.AccountId))
             {
-                throw new AccessDeniedException("Удалить файл может только тот, кто его загрузил.");
+                throw new AccessDeniedException("Удалить файл может только тот, кто его загрузил, или администратор.");
             }
 
             await _fileRepository.DeleteAsync(file, cancellationToken);

@@ -1,4 +1,5 @@
-﻿using Board.Application.AppData.Contexts.Categories.Services;
+﻿using Board.Application.AppData.Common;
+using Board.Application.AppData.Contexts.Categories.Services;
 using Board.Contracts;
 using Board.Contracts.Category;
 using Board.Host.Api.Extensions;
@@ -90,9 +91,11 @@ public class CategoryController : ControllerBase
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <response code="201">Категория успешно создана.</response>
     /// <response code="400">Модель данных запроса невалидна.</response>
+    /// <response code="403">Доступ запрещён: управлять категориями может только администратор.</response>
     /// <response code="422">Произошёл конфликт бизнес-логики.</response>
     /// <returns>Идентификатор созданной категории.</returns>
     [HttpPost]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status422UnprocessableEntity)]
@@ -110,11 +113,12 @@ public class CategoryController : ControllerBase
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <response code="200">Запрос выполнен успешно.</response>
     /// <response code="400">Модель данных запроса невалидна.</response>
-    /// <response code="403">Доступ запрещён.</response>
+    /// <response code="403">Доступ запрещён: управлять категориями может только администратор.</response>
     /// <response code="404">Объявление с указанным идентификатором не найдено.</response>
     /// <response code="422">Произошёл конфликт бизнес-логики.</response>
     /// <returns>Модель обновлённой категории.</returns>
     [HttpPut("{id:Guid}")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(CategoryInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status403Forbidden)]
@@ -134,11 +138,12 @@ public class CategoryController : ControllerBase
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <response code="200">Запрос выполнен успешно.</response>
     /// <response code="400">Модель данных запроса невалидна.</response>
-    /// <response code="403">Доступ запрещён.</response>
+    /// <response code="403">Доступ запрещён: управлять категориями может только администратор.</response>
     /// <response code="404">Объявление с указанным идентификатором не найдено.</response>
     /// <response code="422">Произошёл конфликт бизнес-логики.</response>
     /// <returns>Модель обновлённой категории.</returns>
     [HttpPatch("{id:Guid}")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(CategoryInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status403Forbidden)]
@@ -165,8 +170,9 @@ public class CategoryController : ControllerBase
     /// <param name="id">Идентификатор.</param>
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <response code="204">Запрос выполнен успешно.</response>
-    /// <response code="403">Доступ запрещён.</response>
+    /// <response code="403">Доступ запрещён: управлять категориями может только администратор.</response>
     [HttpDelete("{id:Guid}")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteById(Guid id, CancellationToken cancellationToken)
