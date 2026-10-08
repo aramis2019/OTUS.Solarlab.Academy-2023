@@ -47,9 +47,13 @@ namespace Board.Api.Tests
         /// <summary>
         /// Зарегистрировать нового пользователя и получить клиент с его JWT.
         /// </summary>
-        public async Task<HttpClient> CreateAuthorizedClientAsync()
+        public Task<HttpClient> CreateAuthorizedClientAsync() => AuthorizeAsync(CreateClient());
+
+        /// <summary>
+        /// Зарегистрировать нового пользователя и добавить его JWT в заголовки клиента.
+        /// </summary>
+        public static async Task<HttpClient> AuthorizeAsync(HttpClient client)
         {
-            var client = CreateClient();
             var login = $"user_{Guid.NewGuid():N}".Substring(0, 20);
             const string password = "P@ssw0rd!";
 

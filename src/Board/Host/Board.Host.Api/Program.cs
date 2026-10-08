@@ -13,6 +13,7 @@ using Board.Contracts;
 using Board.Contracts.Advert;
 using Board.Contracts.Interfaces;
 using Board.Host.Api.Middlewares;
+using Board.Host.Api.Options;
 using Board.Host.Api.Services;
 using Board.Infrastucture.DataAccess;
 using Board.Infrastucture.DataAccess.Contexts.Account.Repository;
@@ -23,6 +24,7 @@ using Board.Infrastucture.DataAccess.Interfaces;
 using Board.Infrastucture.MapProfiles;
 using Board.Infrastucture.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
@@ -83,6 +85,11 @@ builder.Services.AddControllers(options =>
                 .ToArray()
         });
     });
+
+// Размер файла проверяется в FileController; лимит multipart — жёсткая граница с запасом на заголовки формы.
+builder.Services.AddOptions<FileUploadOptions>().BindConfiguration(FileUploadOptions.SectionName);
+builder.Services.AddOptions<FormOptions>().Configure<IOptions<FileUploadOptions>>((options, upload) =>
+    options.MultipartBodyLengthLimit = upload.Value.MaxFileSizeBytes + 64 * 1024);
 
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy
     .WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>())
