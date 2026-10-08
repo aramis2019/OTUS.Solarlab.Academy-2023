@@ -1,4 +1,4 @@
-﻿using Board.Contracts.Advert;
+using Board.Contracts.Advert;
 using Board.Domain.Adverts;
 
 namespace Board.Application.AppData.Contexts.Adverts.Repositories;
@@ -9,7 +9,7 @@ namespace Board.Application.AppData.Contexts.Adverts.Repositories;
 public interface IAdvertRepository
 {
     /// <summary>
-    /// Получить список объявлений.
+    /// Получить список активных объявлений.
     /// </summary>
     /// <param name="cancellationToken">Токен отмены операции.</param>
     /// <returns>Список объявлений.</returns>
@@ -20,16 +20,8 @@ public interface IAdvertRepository
     /// </summary>
     /// <param name="id">Идентификатор объявления.</param>
     /// <param name="cancellationToken">Токен отмены операции.</param>
-    /// <returns>Модель объявления.</returns>
-    Task<AdvertInfoDto> Get(Guid id, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Добавить объявление.
-    /// </summary>
-    /// <param name="entity">Объявление.</param>
-    /// <param name="cancellation">Токен отмены операции.</param>
-    /// <returns>Модель добавленного объявления.</returns>
-    Task<AdvertInfoDto> Add(Advert entity, CancellationToken cancellation);
+    /// <returns>Модель объявления или null, если не найдено.</returns>
+    Task<AdvertInfoDto?> Get(Guid id, CancellationToken cancellationToken);
 
     /// <summary>
     /// Найти сущность объявления по идентификатору.
@@ -38,6 +30,20 @@ public interface IAdvertRepository
     /// <param name="cancellationToken">Токен отмены операции.</param>
     /// <returns>Объявление или null, если не найдено.</returns>
     Task<Advert?> FindById(Guid id, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Добавить объявление.
+    /// </summary>
+    /// <param name="entity">Объявление.</param>
+    /// <param name="cancellationToken">Токен отмены операции.</param>
+    Task Add(Advert entity, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Сохранить изменения объявления.
+    /// </summary>
+    /// <param name="entity">Объявление.</param>
+    /// <param name="cancellationToken">Токен отмены операции.</param>
+    Task Update(Advert entity, CancellationToken cancellationToken);
 
     /// <summary>
     /// Удалить объявление.

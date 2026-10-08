@@ -24,7 +24,7 @@ public interface IAccountService
     /// <param name="possword">Пароль.</param>
     /// <param name="cancellation">Токен отмены.</param>
     /// <returns>Токен.</returns>
-    Task<string> LoginAsync(LoginAccountDto accountDto, CancellationToken cancellation);
+    Task<LoginResultDto> LoginAsync(LoginAccountDto accountDto, CancellationToken cancellation);
 
     /// <summary>
     /// Получение текущего пользователя.

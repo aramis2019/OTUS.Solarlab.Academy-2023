@@ -35,11 +35,15 @@ public class AdvertRepository : IAdvertRepository
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public async Task<AdvertInfoDto> Add(Advert entity, CancellationToken cancellationToken)
+    public Task Add(Advert entity, CancellationToken cancellationToken)
     {
         entity.Created = DateTime.UtcNow;
-        await _repository.AddAsync(entity, cancellationToken);
-        return _mapper.Map<AdvertInfoDto>(entity);
+        return _repository.AddAsync(entity, cancellationToken);
+    }
+
+    public Task Update(Advert entity, CancellationToken cancellationToken)
+    {
+        return _repository.UpdateAsync(entity, cancellationToken);
     }
 
     public Task<Advert> FindById(Guid id, CancellationToken cancellationToken)

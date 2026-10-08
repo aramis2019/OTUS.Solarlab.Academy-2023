@@ -1,10 +1,10 @@
 ﻿using Board.Application.AppData.Contexts.Categories.Services;
 using Board.Contracts;
 using Board.Contracts.Category;
+using Board.Host.Api.Extensions;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace Board.Host.Api.Controllers;
 
@@ -100,7 +100,7 @@ public class CategoryController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateCategoryDto dto, CancellationToken cancellationToken)
     {
         var result = await _categoryService.CreateAsync(dto, cancellationToken);
-        return StatusCode((int)HttpStatusCode.Created, result);
+        return CreatedAtAction(nameof(GetById), new { id = result }, result);
     }
 
     /// <summary>
@@ -123,7 +123,8 @@ public class CategoryController : ControllerBase
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCategoryDto dto, CancellationToken cancellationToken)
     {
-        return await Task.Run(() => Ok(new CategoryInfoDto()), cancellationToken);
+        var result = await _categoryService.UpdateAsync(id, dto, cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>
@@ -147,7 +148,16 @@ public class CategoryController : ControllerBase
     public async Task<IActionResult> Patch(Guid id, [FromBody] JsonPatchDocument<UpdateCategoryDto> dto,
         CancellationToken cancellationToken)
     {
-        return await Task.Run(() => Ok(new CategoryInfoDto()), cancellationToken);
+        var model = await _categoryService.GetForUpdateAsync(id, cancellationToken);
+
+        dto.ApplyTo(model, ModelState);
+        if (!ModelState.IsValid || !TryValidateModel(model))
+        {
+            return this.InvalidModelState();
+        }
+
+        var result = await _categoryService.UpdateAsync(id, model, cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>
@@ -162,6 +172,7 @@ public class CategoryController : ControllerBase
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteById(Guid id, CancellationToken cancellationToken)
     {
-        return await Task.Run(NoContent, cancellationToken);
+        await _categoryService.DeleteAsync(id, cancellationToken);
+        return NoContent();
     }
 }

@@ -34,11 +34,11 @@ namespace Board.Api.Tests
         }
 
         [Fact]
-        public async Task Account_GetUserInfo_ReturnsCurrentUser()
+        public async Task Account_GetCurrent_ReturnsCurrentUser()
         {
             var httpClient = await _webApplicationFactory.CreateAuthorizedClientAsync();
 
-            var response = await httpClient.PostAsync("Account/GetUserInfo", null);
+            var response = await httpClient.GetAsync("Account/current");
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var account = await response.Content.ReadFromJsonAsync<AccountDto>();
@@ -47,9 +47,9 @@ namespace Board.Api.Tests
         }
 
         [Fact]
-        public async Task Account_GetUserInfo_Anonymous_Unauthorized()
+        public async Task Account_GetCurrent_Anonymous_Unauthorized()
         {
-            var response = await _webApplicationFactory.CreateClient().PostAsync("Account/GetUserInfo", null);
+            var response = await _webApplicationFactory.CreateClient().GetAsync("Account/current");
 
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }

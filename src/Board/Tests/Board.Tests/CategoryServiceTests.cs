@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
+using Board.Application.AppData.Common.Exceptions;
 using Board.Application.AppData.Contexts.Categories.Repositories;
 using Board.Application.AppData.Contexts.Categories.Services;
 using Moq;
@@ -152,11 +153,8 @@ namespace Board.Tests
 
             CategoryService service = new CategoryService(categoryRepositoryMock.Object, mapperMock.Object);
 
-            // Act
-            var result = await service.GetByIdAsync(id, token);
-
-            // Assert
-            result.ShouldBe(null);
+            // Act & Assert
+            await Should.ThrowAsync<EntityNotFoundException>(() => service.GetByIdAsync(id, token));
             categoryRepositoryMock.Verify(x => x.GetByIdAsync(id, token), Times.Once);
         }
     }

@@ -3,7 +3,6 @@ using Board.Contracts;
 using Board.Contracts.File;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace Board.Host.Api.Controllers;
 
@@ -40,14 +39,14 @@ public class FileController : ControllerBase
     /// <response code="200">Запрос выполнен успешно.</response>
     /// <response code="404">Файл с указанным идентификатором не найден.</response>
     /// <returns>Информация о файле.</returns>
-    [HttpGet("{id}/info")]
+    [HttpGet("{id:Guid}/info")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(FileInfoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetInfoById(Guid id, CancellationToken cancellationToken)
     {
         var result = await _fileService.GetInfoByIdAsync(id, cancellationToken);
-        return result == null ? NotFound() : Ok(result);
+        return Ok(result);
     }
 
     /// <summary>
@@ -72,7 +71,7 @@ public class FileController : ControllerBase
             Name = file.FileName
         };
         var result = await _fileService.UploadAsync(fileDto, cancellationToken);
-        return StatusCode((int)HttpStatusCode.Created, result);
+        return CreatedAtAction(nameof(GetInfoById), new { id = result }, result);
     }
 
     /// <summary>
@@ -83,18 +82,13 @@ public class FileController : ControllerBase
     /// <response code="200">Запрос выполнен успешно.</response>
     /// <response code="404">Файл с указанным идентификатором не найден.</response>
     /// <returns>Файл в виде потока.</returns>
-    [HttpGet("{id}")]
+    [HttpGet("{id:Guid}")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Download(Guid id, CancellationToken cancellationToken)
     {
         var result = await _fileService.DownloadAsync(id, cancellationToken);
-
-        if (result == null) 
-        { 
-            return NotFound(); 
-        }
 
         Response.ContentLength = result.Content.Length;
         return File(result.Content, result.ContentType, result.Name, true);
@@ -108,7 +102,7 @@ public class FileController : ControllerBase
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <response code="403">Доступ запрещён.</response>
     /// <response code="404">Файл с указанным идентификатором не найден.</response>
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:Guid}")]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)

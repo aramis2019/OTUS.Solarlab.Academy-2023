@@ -13,7 +13,7 @@ namespace Board.Application.AppData.Contexts.Files.Repositories
         /// <param name="id">Идентификатор файла.</param>
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns>Информация о файле.</returns>
-        Task<FileInfoDto> GetInfoByIdAsync(Guid id, CancellationToken cancellationToken);
+        Task<FileInfoDto?> GetInfoByIdAsync(Guid id, CancellationToken cancellationToken);
 
         /// <summary>
         /// Загрузка файла в систему.
@@ -29,7 +29,7 @@ namespace Board.Application.AppData.Contexts.Files.Repositories
         /// <param name="id">Идентификатор файла.</param>
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns>Информация о скачиваемом файле.</returns>
-        Task<FileDto> DownloadAsync(Guid id, CancellationToken cancellationToken);
+        Task<FileDto?> DownloadAsync(Guid id, CancellationToken cancellationToken);
 
         /// <summary>
         /// Найти сущность файла по идентификатору.

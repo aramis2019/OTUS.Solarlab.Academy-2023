@@ -1,4 +1,6 @@
-﻿namespace Board.Contracts.Account
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Board.Contracts.Account
 {
     /// <summary>
     /// Модель для входа в аккаунт.
@@ -8,11 +10,13 @@
         /// <summary>
         /// Логин.
         /// </summary>
+        [Required(ErrorMessage = "Логин не указан")]
         public string Login { get; set; }
 
         /// <summary>
         /// Пароль.
         /// </summary>
+        [Required(ErrorMessage = "Пароль не указан")]
         public string Password { get; set; }
     }
 }

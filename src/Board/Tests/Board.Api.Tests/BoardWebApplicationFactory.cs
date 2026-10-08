@@ -58,9 +58,9 @@ namespace Board.Api.Tests
 
             var loginResponse = await client.PostAsJsonAsync("Account/login", new LoginAccountDto { Login = login, Password = password });
             loginResponse.EnsureSuccessStatusCode();
-            var token = await loginResponse.Content.ReadAsStringAsync();
+            var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResultDto>();
 
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Trim('"'));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginResult!.Token);
             return client;
         }
 

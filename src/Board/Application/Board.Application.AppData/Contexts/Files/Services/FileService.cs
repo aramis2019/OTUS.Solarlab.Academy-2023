@@ -41,15 +41,15 @@ namespace Board.Application.AppData.Contexts.Files.Services
         }
 
         /// <inheritdoc/>
-        public Task<FileDto> DownloadAsync(Guid id, CancellationToken cancellationToken)
+        public async Task<FileDto> DownloadAsync(Guid id, CancellationToken cancellationToken)
         {
-            return _fileRepository.DownloadAsync(id, cancellationToken);
+            return await _fileRepository.DownloadAsync(id, cancellationToken) ?? throw NotFound(id);
         }
 
         /// <inheritdoc/>
-        public Task<FileInfoDto> GetInfoByIdAsync(Guid id, CancellationToken cancellationToken)
+        public async Task<FileInfoDto> GetInfoByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            return _fileRepository.GetInfoByIdAsync(id, cancellationToken);
+            return await _fileRepository.GetInfoByIdAsync(id, cancellationToken) ?? throw NotFound(id);
         }
 
         /// <inheritdoc/>
@@ -59,5 +59,8 @@ namespace Board.Application.AppData.Contexts.Files.Services
             file.AccountId = _currentUserAccessor.GetCurrentAccountId();
             return _fileRepository.UploadAsync(file, cancellationToken);
         }
+
+        private static EntityNotFoundException NotFound(Guid id) =>
+            new($"Файл с идентификатором '{id}' не найден.");
     }
 }

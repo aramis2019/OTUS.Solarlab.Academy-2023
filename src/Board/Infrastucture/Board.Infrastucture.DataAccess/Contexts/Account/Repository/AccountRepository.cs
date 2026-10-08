@@ -34,10 +34,6 @@ public class AccountRepository : IAccountRepository
     /// <inheritdoc/>
     public async Task<Domain.Account.Account> FindWhere(Expression<Func<Domain.Account.Account, bool>> predicate, CancellationToken cancellation)
     {
-        var data = _repository.GetAllFiltered(predicate);
-
-        Domain.Account.Account account = await data.Where(predicate).FirstOrDefaultAsync(cancellation);
-
-        return account;
+        return await _repository.GetAllFiltered(predicate).FirstOrDefaultAsync(cancellation);
     }
 }

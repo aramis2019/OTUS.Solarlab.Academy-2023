@@ -1,6 +1,7 @@
 ﻿using Board.Application.AppData.Contexts.Adverts.Services;
 using Board.Contracts;
 using Board.Contracts.Advert;
+using Board.Host.Api.Extensions;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -65,12 +66,6 @@ public class AdvertController : ControllerBase
     {
         _logger.LogInformation($"Запрос объявления по идентификатору: {id}");
         var result = await _advertService.Get(id, cancellationToken);
-
-        if (result == null)
-        {
-            return NotFound();
-        }
-
         return Ok(result);
     }
 
@@ -91,7 +86,7 @@ public class AdvertController : ControllerBase
     {
         _logger.LogInformation($"Запрос на создание объявления: {JsonConvert.SerializeObject(dto)}");
         var result = await _advertService.Add(dto, cancellationToken);
-        return CreatedAtAction(nameof(Create), new { result.Id });
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     /// <summary>
@@ -114,8 +109,9 @@ public class AdvertController : ControllerBase
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAdvertDto dto, CancellationToken cancellationToken)
     {
-        // TODO NotImplemented
-        return await Task.Run(() => Ok(new AdvertInfoDto()), cancellationToken);
+        _logger.LogInformation("Запрос на обновление объявления {Id}", id);
+        var result = await _advertService.Update(id, dto, cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>
@@ -139,8 +135,17 @@ public class AdvertController : ControllerBase
     public async Task<IActionResult> Patch(Guid id, [FromBody] JsonPatchDocument<UpdateAdvertDto> dto,
         CancellationToken cancellationToken)
     {
-        // TODO NotImplemented
-        return await Task.Run(() => Ok(new AdvertInfoDto()), cancellationToken);
+        _logger.LogInformation("Запрос на частичное обновление объявления {Id}", id);
+        var model = await _advertService.GetForUpdate(id, cancellationToken);
+
+        dto.ApplyTo(model, ModelState);
+        if (!ModelState.IsValid || !TryValidateModel(model))
+        {
+            return this.InvalidModelState();
+        }
+
+        var result = await _advertService.Update(id, model, cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>

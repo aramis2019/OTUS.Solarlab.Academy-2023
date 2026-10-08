@@ -24,8 +24,10 @@ using Board.Infrastucture.MapProfiles;
 using Board.Infrastucture.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -47,21 +49,23 @@ builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IFileRepository, FileRepository>();
 builder.Services.AddScoped<IAdvertRepository, AdvertRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<IAdvertRepository, AdvertRepository>();
 
 // Add services to the container.
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IAdvertService, AdvertService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
-builder.Services.AddScoped<IAdvertService, AdvertService>();
 builder.Services.AddScoped<IForbiddenWordsService, ForbiddenWordsService>();
 builder.Services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
 builder.Services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
 
 builder.Services.AddSingleton<IMapper>(new Mapper(GetMapperConfiguration()));
 
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+    {
+        // Newtonsoft нужен только для JsonPatchDocument, остальное сериализуется System.Text.Json.
+        options.InputFormatters.Insert(0, GetJsonPatchInputFormatter());
+    })
     .ConfigureApiBehaviorOptions(options =>
     {
         // Ошибки валидации модели возвращаем в том же формате ErrorDto, что и остальные ошибки.
@@ -191,6 +195,19 @@ static string GetJwtKey(IConfiguration configuration)
             "Задайте его через user-secrets или переменную окружения Jwt__Key.");
     }
     return key;
+}
+
+static NewtonsoftJsonPatchInputFormatter GetJsonPatchInputFormatter()
+{
+    return new ServiceCollection()
+        .AddLogging()
+        .AddMvc()
+        .AddNewtonsoftJson()
+        .Services.BuildServiceProvider()
+        .GetRequiredService<IOptions<MvcOptions>>()
+        .Value.InputFormatters
+        .OfType<NewtonsoftJsonPatchInputFormatter>()
+        .First();
 }
 
 static MapperConfiguration GetMapperConfiguration()

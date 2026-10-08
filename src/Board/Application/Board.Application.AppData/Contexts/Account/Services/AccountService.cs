@@ -54,7 +54,7 @@ public class AccountService : IAccountService
     }
 
     /// <inheritdoc />
-    public async Task<string> LoginAsync(LoginAccountDto accountDto, CancellationToken cancellation)
+    public async Task<LoginResultDto> LoginAsync(LoginAccountDto accountDto, CancellationToken cancellation)
     {
         var existingAccount = await _accountRepository.FindWhere(account => account.Login == accountDto.Login, cancellation);
 
@@ -80,19 +80,16 @@ public class AccountService : IAccountService
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!)),
                 SecurityAlgorithms.HmacSha256));
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return new LoginResultDto { Token = new JwtSecurityTokenHandler().WriteToken(token) };
     }
 
     /// <inheritdoc />
     public async Task<AccountDto> GetCurrentAsync(CancellationToken cancellation)
     {
-        var id = _currentUserAccessor.GetCurrentAccountId();
-        if (id == null)
-        {
-            return null;
-        }
+        var id = _currentUserAccessor.GetCurrentAccountId()
+            ?? throw new InvalidOperationException("Метод доступен только аутентифицированному пользователю.");
 
-        var user = await _accountRepository.FindById(id.Value, cancellation);
+        var user = await _accountRepository.FindById(id, cancellation);
         if (user == null)
         {
             throw new EntityNotFoundException($"Не найден пользователь с идентификатором '{id}'.");
