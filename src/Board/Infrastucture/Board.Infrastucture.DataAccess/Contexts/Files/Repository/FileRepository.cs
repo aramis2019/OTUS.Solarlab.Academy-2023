@@ -23,7 +23,7 @@ namespace Board.Infrastucture.DataAccess.Contexts.Files.Repository
         }
 
         /// <inheritdoc/>
-        public Task<Domain.Files.File> FindByIdAsync(Guid id, CancellationToken cancellationToken)
+        public Task<Domain.Files.File?> FindByIdAsync(Guid id, CancellationToken cancellationToken)
         {
             return _repository.GetByIdAsync(id, cancellationToken);
         }
@@ -34,7 +34,7 @@ namespace Board.Infrastucture.DataAccess.Contexts.Files.Repository
         }
 
         /// <inheritdoc/>
-        public Task<FileDto> DownloadAsync(Guid id, CancellationToken cancellationToken)
+        public Task<FileDto?> DownloadAsync(Guid id, CancellationToken cancellationToken)
         {
             return _repository.GetAll().Where(x => x.Id == id)
                               .ProjectTo<FileDto>(_mapper.ConfigurationProvider)
@@ -42,7 +42,7 @@ namespace Board.Infrastucture.DataAccess.Contexts.Files.Repository
         }
 
         /// <inheritdoc/>
-        public Task<FileInfoDto> GetInfoByIdAsync(Guid id, CancellationToken cancellationToken)
+        public Task<FileInfoDto?> GetInfoByIdAsync(Guid id, CancellationToken cancellationToken)
         {
             return _repository.GetAll().Where(x => x.Id == id)
                               .ProjectTo<FileInfoDto>(_mapper.ConfigurationProvider)

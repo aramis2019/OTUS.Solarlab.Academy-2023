@@ -37,13 +37,13 @@ public class AccountRepository : IAccountRepository
     }
 
     /// <inheritdoc/>
-    public Task<Domain.Account.Account> FindById(Guid id, CancellationToken cancellation)
+    public Task<Domain.Account.Account?> FindById(Guid id, CancellationToken cancellation)
     {
         return _repository.GetByIdAsync(id, cancellation);  
     }
 
     /// <inheritdoc/>
-    public async Task<Domain.Account.Account> FindWhere(Expression<Func<Domain.Account.Account, bool>> predicate, CancellationToken cancellation)
+    public async Task<Domain.Account.Account?> FindWhere(Expression<Func<Domain.Account.Account, bool>> predicate, CancellationToken cancellation)
     {
         return await _repository.GetAllFiltered(predicate).FirstOrDefaultAsync(cancellation);
     }

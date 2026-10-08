@@ -20,7 +20,7 @@ namespace Board.Domain.Categories
         /// <summary>
         /// Наименование.
         /// </summary>
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Признак актуальности.
@@ -35,6 +35,6 @@ namespace Board.Domain.Categories
         /// <summary>
         /// Объявления.
         /// </summary>
-        public virtual List<Advert> Adverts { get; set; }
+        public virtual List<Advert> Adverts { get; set; } = new();
     }
 }

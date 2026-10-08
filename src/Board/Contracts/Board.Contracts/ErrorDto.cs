@@ -18,6 +18,6 @@
         /// <summary>
         /// Вложенные ошибки.
         /// </summary>
-        public ErrorDto[] InternalErrors { get; set; }
+        public ErrorDto[]? InternalErrors { get; set; }
     }
 }

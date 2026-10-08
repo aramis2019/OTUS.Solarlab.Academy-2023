@@ -30,7 +30,7 @@ public class AdvertRepository : IAdvertRepository
             .ToArrayAsync(cancellationToken);
     }
 
-    public Task<AdvertInfoDto> Get(Guid id, CancellationToken cancellationToken)
+    public Task<AdvertInfoDto?> Get(Guid id, CancellationToken cancellationToken)
     {
         return _repository.GetAll()
             .ProjectTo<AdvertInfoDto>(_mapper.ConfigurationProvider)
@@ -48,7 +48,7 @@ public class AdvertRepository : IAdvertRepository
         return _repository.UpdateAsync(entity, cancellationToken);
     }
 
-    public Task<Advert> FindById(Guid id, CancellationToken cancellationToken)
+    public Task<Advert?> FindById(Guid id, CancellationToken cancellationToken)
     {
         return _repository.GetByIdAsync(id, cancellationToken);
     }

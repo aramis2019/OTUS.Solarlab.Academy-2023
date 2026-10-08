@@ -13,7 +13,7 @@
         /// <summary>
         /// Наименование.
         /// </summary>
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Цена.
@@ -23,12 +23,12 @@
         /// <summary>
         /// Ссылка на изображение.
         /// </summary>
-        public string ImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
 
         /// <summary>
         /// Полный адрес.
         /// </summary>
-        public string Address { get; set; }
+        public string Address { get; set; } = string.Empty;
 
         /// <summary>
         /// Дата/время создания (UTC).

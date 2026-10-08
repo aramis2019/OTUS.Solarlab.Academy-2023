@@ -27,7 +27,7 @@ public interface IRepository<TEntity> where TEntity: class
     /// <param name="id">Идентификатор <see cref="TEntity"/>.</param>
     /// <param name="cancellationToken">Токен отмены.</param>
     /// <returns><see cref="TEntity"/>.</returns>
-    Task<TEntity> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+    Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
     /// <summary>
     /// Добавляет элемент <see cref="TEntity"/>.

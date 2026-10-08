@@ -19,7 +19,7 @@ namespace Board.Contracts.Attributes
         private static readonly Regex WordRegex = new(@"\p{L}+", RegexOptions.Compiled);
 
         /// <inheritdoc />
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
         {
             if (value is not string valueAsString)
             {
@@ -27,7 +27,7 @@ namespace Board.Contracts.Attributes
             }
 
             // получить сервис из контекста
-            var service = (IForbiddenWordsService)validationContext.GetService(typeof(IForbiddenWordsService));
+            var service = validationContext.GetService(typeof(IForbiddenWordsService)) as IForbiddenWordsService;
             if (service == null)
             {
                 return ValidationResult.Success;

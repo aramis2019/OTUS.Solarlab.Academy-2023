@@ -34,14 +34,14 @@ namespace Board.Infrastucture.DataAccess.Contexts.Category.Repository
         }
 
         /// <inheritdoc/>
-        public Task<CategoryInfoDto> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+        public Task<CategoryInfoDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
             return _repository.GetAll().Where(s => s.Id == id)
                               .ProjectTo<CategoryInfoDto>(_mapper.ConfigurationProvider)
                               .FirstOrDefaultAsync(cancellationToken);
         }
 
-        public Task<Domain.Categories.Category> FindById(Guid id, CancellationToken cancellationToken)
+        public Task<Domain.Categories.Category?> FindById(Guid id, CancellationToken cancellationToken)
         {
             return _repository.GetByIdAsync(id, cancellationToken);
         }

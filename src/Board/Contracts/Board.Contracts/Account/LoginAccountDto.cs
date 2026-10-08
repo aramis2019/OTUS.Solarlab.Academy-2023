@@ -11,12 +11,12 @@ namespace Board.Contracts.Account
         /// Логин.
         /// </summary>
         [Required(ErrorMessage = "Логин не указан")]
-        public string Login { get; set; }
+        public string Login { get; set; } = string.Empty;
 
         /// <summary>
         /// Пароль.
         /// </summary>
         [Required(ErrorMessage = "Пароль не указан")]
-        public string Password { get; set; }
+        public string Password { get; set; } = string.Empty;
     }
 }
