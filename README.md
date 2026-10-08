@@ -33,9 +33,12 @@
 
 ## docker-compose 
 
+Нужен Docker Compose v2 (`docker compose`) или `docker-compose` версии 1.29 и новее:
+мигратор ждёт, пока PostgreSQL станет доступен, а API — пока мигратор успешно завершится.
+
 - Для запуска контейнеров выполняем:
 
-	`docker-compose up -d`
+	`docker compose up -d`
 	
   Запускаются сервисы:
   - персистентный сервис для работы с БД (PostgreSQL), доступен только с локальной машины:
