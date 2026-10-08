@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Board.Application.AppData.Common;
+using Board.Application.AppData.Common.Exceptions;
 using Board.Application.AppData.Contexts.Adverts.Repositories;
 using Board.Contracts.Advert;
 using Board.Domain.Adverts;
@@ -51,7 +52,7 @@ public class AdvertService : IAdvertService
 
         if (entity.AccountId == null || entity.AccountId != _currentUserAccessor.GetCurrentAccountId())
         {
-            throw new UnauthorizedAccessException("Удалить объявление может только его автор.");
+            throw new AccessDeniedException("Удалить объявление может только его автор.");
         }
 
         await _advertRepository.Delete(entity, cancellationToken);

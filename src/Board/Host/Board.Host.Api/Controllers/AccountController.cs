@@ -63,15 +63,13 @@ public class AccountController : ControllerBase
     /// <param name="cancellation">Токен отмены.</param>
     /// <response code="200">Запрос выполнен успешно</response>
     /// <response code="400">Модель данных запроса невалидна.</response>
-    /// <response code="403">Доступ запрещён (пользователь заблокирован).</response>
-    /// <response code="404">Пользователь не найден.</response>
+    /// <response code="401">Неверный логин или пароль.</response>
     /// <returns>Модель с данными входа.</returns>
     [HttpPost("login")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(LoginResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginAccountDto dto, CancellationToken cancellation)
     {
         _logger.LogInformation("Вход в аккаунт.");

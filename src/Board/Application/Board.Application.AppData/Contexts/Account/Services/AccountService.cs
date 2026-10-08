@@ -1,4 +1,5 @@
 using Board.Application.AppData.Common;
+using Board.Application.AppData.Common.Exceptions;
 using Board.Application.AppData.Contexts.Accounts.Repositories;
 using Board.Contracts.Account;
 using Board.Domain.Account;
@@ -36,7 +37,7 @@ public class AccountService : IAccountService
         var existingAccount = await _accountRepository.FindWhere(account => account.Login == accountDto.Login, cancellation);
         if (existingAccount != null)
         {
-            throw new Exception($"Пользователь с логином '{accountDto.Login}' уже зарегистрирован!");
+            throw new BusinessRuleException($"Пользователь с логином '{accountDto.Login}' уже зарегистрирован.");
         }
 
         var account = new Account
@@ -60,7 +61,7 @@ public class AccountService : IAccountService
         // Одинаковое сообщение для неизвестного логина и неверного пароля, чтобы нельзя было перебором узнать логины.
         if (existingAccount == null || !_passwordHasher.Verify(accountDto.Password, existingAccount.PasswordHash))
         {
-            throw new Exception("Неверный логин или пароль.");
+            throw new InvalidCredentialsException();
         }
 
         var claims = new List<Claim>
@@ -94,7 +95,7 @@ public class AccountService : IAccountService
         var user = await _accountRepository.FindById(id.Value, cancellation);
         if (user == null)
         {
-            throw new Exception($"Не найден пользователь с идентификатором '{id}'.");
+            throw new EntityNotFoundException($"Не найден пользователь с идентификатором '{id}'.");
         }
 
         return new AccountDto

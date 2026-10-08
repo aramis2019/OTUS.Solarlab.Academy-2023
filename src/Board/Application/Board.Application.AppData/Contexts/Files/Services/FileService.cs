@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Board.Application.AppData.Common;
+using Board.Application.AppData.Common.Exceptions;
 using Board.Application.AppData.Contexts.Files.Repositories;
 using Board.Contracts.File;
 
@@ -33,7 +34,7 @@ namespace Board.Application.AppData.Contexts.Files.Services
 
             if (file.AccountId == null || file.AccountId != _currentUserAccessor.GetCurrentAccountId())
             {
-                throw new UnauthorizedAccessException("Удалить файл может только тот, кто его загрузил.");
+                throw new AccessDeniedException("Удалить файл может только тот, кто его загрузил.");
             }
 
             await _fileRepository.DeleteAsync(file, cancellationToken);

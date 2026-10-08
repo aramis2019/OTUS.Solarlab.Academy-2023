@@ -9,8 +9,10 @@ using Board.Application.AppData.Contexts.Categories.Services;
 using Board.Application.AppData.Contexts.Files.Repositories;
 using Board.Application.AppData.Contexts.Files.Services;
 using Board.Application.AppData.Services;
+using Board.Contracts;
 using Board.Contracts.Advert;
 using Board.Contracts.Interfaces;
+using Board.Host.Api.Middlewares;
 using Board.Host.Api.Services;
 using Board.Infrastucture.DataAccess;
 using Board.Infrastucture.DataAccess.Contexts.Account.Repository;
@@ -21,6 +23,7 @@ using Board.Infrastucture.DataAccess.Interfaces;
 using Board.Infrastucture.MapProfiles;
 using Board.Infrastucture.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
@@ -58,7 +61,24 @@ builder.Services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>
 
 builder.Services.AddSingleton<IMapper>(new Mapper(GetMapperConfiguration()));
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        // Ошибки валидации модели возвращаем в том же формате ErrorDto, что и остальные ошибки.
+        options.InvalidModelStateResponseFactory = context => new BadRequestObjectResult(new ErrorDto
+        {
+            ErrorCode = "validation_error",
+            UserMessage = "Модель данных запроса невалидна.",
+            InternalErrors = context.ModelState
+                .Where(entry => entry.Value!.Errors.Count > 0)
+                .SelectMany(entry => entry.Value!.Errors.Select(error => new ErrorDto
+                {
+                    ErrorCode = entry.Key,
+                    UserMessage = string.IsNullOrEmpty(error.ErrorMessage) ? "Некорректное значение." : error.ErrorMessage
+                }))
+                .ToArray()
+        });
+    });
 
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy
     .WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>())
@@ -138,6 +158,8 @@ var app = builder.Build();
 GetJwtKey(app.Configuration);
 
 // Configure the HTTP request pipeline.
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
