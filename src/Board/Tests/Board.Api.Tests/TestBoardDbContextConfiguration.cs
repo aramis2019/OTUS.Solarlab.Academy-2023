@@ -1,5 +1,5 @@
-﻿using Board.Infrastucture.DataAccess;
-using Board.Infrastucture.DataAccess.Interfaces;
+﻿using Board.Infrastructure.DataAccess;
+using Board.Infrastructure.DataAccess.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

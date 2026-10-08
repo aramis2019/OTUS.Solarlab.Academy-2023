@@ -1,7 +1,7 @@
 ﻿using System;
 using Board.Domain.Adverts;
 using Board.Domain.Categories;
-using Board.Infrastucture.DataAccess;
+using Board.Infrastructure.DataAccess;
 
 namespace Board.Api.Tests
 {

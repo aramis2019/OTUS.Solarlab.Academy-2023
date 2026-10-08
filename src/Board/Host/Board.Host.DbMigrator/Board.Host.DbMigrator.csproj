@@ -23,6 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Infrastucture\Board.Infrastucture.DataAccess\Board.Infrastucture.DataAccess.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Board.Infrastructure.DataAccess\Board.Infrastructure.DataAccess.csproj" />
   </ItemGroup>
 </Project>

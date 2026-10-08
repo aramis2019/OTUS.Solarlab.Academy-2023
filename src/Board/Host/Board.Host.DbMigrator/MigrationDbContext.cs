@@ -1,4 +1,4 @@
-﻿using Board.Infrastucture.DataAccess;
+﻿using Board.Infrastructure.DataAccess;
 using System;
 using System.Collections.Generic;
 using System.Linq;
