@@ -3,6 +3,8 @@ using Board.Contracts;
 using Board.Contracts.Account;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Board.Host.Api.Options;
 
 namespace Board.Host.Api.Controllers;
 
@@ -37,9 +39,12 @@ public class AccountController : ControllerBase
     /// <response code="201">Аккаунт успешно зарегистрирован.</response>
     /// <response code="400">Модель данных запроса невалидна.</response>
     /// <response code="422">Пользователь с таким логином уже зарегистрирован.</response>
+    /// <response code="429">Слишком много запросов с этого IP-адреса.</response>
     /// <returns>Идентификатор зарегистрированного аккаунта.</returns>
     [HttpPost("register")]
     [AllowAnonymous]
+    [EnableRateLimiting(AuthRateLimitOptions.PolicyName)]
+    [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status422UnprocessableEntity)]
@@ -58,9 +63,12 @@ public class AccountController : ControllerBase
     /// <response code="200">Запрос выполнен успешно</response>
     /// <response code="400">Модель данных запроса невалидна.</response>
     /// <response code="401">Неверный логин или пароль.</response>
+    /// <response code="429">Слишком много запросов с этого IP-адреса.</response>
     /// <returns>Модель с JWT для заголовка Authorization.</returns>
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting(AuthRateLimitOptions.PolicyName)]
+    [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(LoginResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status401Unauthorized)]

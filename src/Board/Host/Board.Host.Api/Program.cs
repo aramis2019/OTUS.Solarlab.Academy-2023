@@ -26,12 +26,14 @@ using Board.Infrastucture.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -93,6 +95,37 @@ builder.Services.AddControllers()
 builder.Services.AddOptions<FileUploadOptions>().BindConfiguration(FileUploadOptions.SectionName);
 builder.Services.AddOptions<FormOptions>().Configure<IOptions<FileUploadOptions>>((options, upload) =>
     options.MultipartBodyLengthLimit = upload.Value.MaxFileSizeBytes + 64 * 1024);
+
+// Защита входа и регистрации от перебора: ограничение числа запросов с одного IP.
+builder.Services.AddOptions<AuthRateLimitOptions>().BindConfiguration(AuthRateLimitOptions.SectionName);
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy(AuthRateLimitOptions.PolicyName, httpContext =>
+    {
+        var limits = httpContext.RequestServices.GetRequiredService<IOptions<AuthRateLimitOptions>>().Value;
+        return RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = limits.PermitLimit,
+                Window = TimeSpan.FromSeconds(limits.WindowSeconds),
+                QueueLimit = 0
+            });
+    });
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString();
+        }
+        await context.HttpContext.Response.WriteAsJsonAsync(new ErrorDto
+        {
+            ErrorCode = "too_many_requests",
+            UserMessage = "Слишком много попыток. Повторите позже."
+        }, cancellationToken);
+    };
+});
 
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy
     .WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>())
@@ -169,6 +202,8 @@ else
 }
 
 app.UseCors();
+
+app.UseRateLimiter();
 
 app.UseHttpsRedirection();
 

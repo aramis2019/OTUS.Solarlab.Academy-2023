@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Board.Contracts;
 using Board.Contracts.Account;
 using Board.Contracts.Advert;
+using Microsoft.AspNetCore.Hosting;
 using Xunit;
 
 namespace Board.Api.Tests
@@ -87,6 +88,25 @@ namespace Board.Api.Tests
             Assert.Equal(HttpStatusCode.Forbidden, strangerResponse.StatusCode);
             Assert.Equal("forbidden", (await strangerResponse.Content.ReadFromJsonAsync<ErrorDto>())!.ErrorCode);
             Assert.Equal(HttpStatusCode.NoContent, authorResponse.StatusCode);
+        }
+
+        [Fact]
+        public async Task Login_TooManyAttempts_Returns429()
+        {
+            var client = _webApplicationFactory
+                .WithWebHostBuilder(builder => builder.UseSetting("RateLimiting:Auth:PermitLimit", "3"))
+                .CreateClient();
+            var dto = new LoginAccountDto { Login = "no_such_user", Password = "wrong-password" };
+
+            for (var i = 0; i < 3; i++)
+            {
+                Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync("Account/login", dto)).StatusCode);
+            }
+            var response = await client.PostAsJsonAsync("Account/login", dto);
+
+            Assert.Equal(HttpStatusCode.TooManyRequests, response.StatusCode);
+            Assert.True(response.Headers.Contains("Retry-After"));
+            Assert.Equal("too_many_requests", (await response.Content.ReadFromJsonAsync<ErrorDto>())!.ErrorCode);
         }
     }
 }

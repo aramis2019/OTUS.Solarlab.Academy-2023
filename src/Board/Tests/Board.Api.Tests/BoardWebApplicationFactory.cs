@@ -24,6 +24,8 @@ namespace Board.Api.Tests
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseSetting("Jwt:Key", TestJwtKey);
+            // Тесты регистрируют много пользователей с одного «адреса»; сам лимит проверяется отдельным тестом.
+            builder.UseSetting("RateLimiting:Auth:PermitLimit", "100000");
 
             builder.ConfigureServices(services =>
             {
