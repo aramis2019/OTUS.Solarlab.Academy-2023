@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
@@ -52,6 +52,20 @@ namespace Board.Api.Tests
             var response = await _webApplicationFactory.CreateClient().GetAsync("Account/current");
 
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Account_Login_IsCaseInsensitive()
+        {
+            var httpClient = _webApplicationFactory.CreateClient();
+            var login = $"Case_{Guid.NewGuid():N}".Substring(0, 20);
+            await httpClient.PostAsJsonAsync("Account/register", new CreateAccountDto { Login = login, Password = "P@ssw0rd!" });
+
+            var duplicate = await httpClient.PostAsJsonAsync("Account/register", new CreateAccountDto { Login = login.ToLowerInvariant(), Password = "P@ssw0rd!" });
+            var loginResponse = await httpClient.PostAsJsonAsync("Account/login", new LoginAccountDto { Login = login.ToUpperInvariant(), Password = "P@ssw0rd!" });
+
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, duplicate.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
         }
     }
 }

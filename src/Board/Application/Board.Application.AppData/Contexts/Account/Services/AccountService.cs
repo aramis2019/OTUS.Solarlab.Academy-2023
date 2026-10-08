@@ -34,7 +34,8 @@ public class AccountService : IAccountService
     /// <inheritdoc />
     public async Task<Guid> RegisterAccountAsync(CreateAccountDto accountDto, CancellationToken cancellation)
     {
-        var existingAccount = await _accountRepository.FindWhere(account => account.Login == accountDto.Login, cancellation);
+        var normalizedLogin = Account.NormalizeLogin(accountDto.Login);
+        var existingAccount = await _accountRepository.FindWhere(account => account.NormalizedLogin == normalizedLogin, cancellation);
         if (existingAccount != null)
         {
             throw new BusinessRuleException($"Пользователь с логином '{accountDto.Login}' уже зарегистрирован.");
@@ -43,7 +44,8 @@ public class AccountService : IAccountService
         var account = new Account
         {
             Name = accountDto.Login,
-            Login = accountDto.Login,
+            Login = accountDto.Login.Trim(),
+            NormalizedLogin = normalizedLogin,
             PasswordHash = _passwordHasher.Hash(accountDto.Password),
             Created = DateTime.UtcNow
         };
@@ -56,7 +58,8 @@ public class AccountService : IAccountService
     /// <inheritdoc />
     public async Task<LoginResultDto> LoginAsync(LoginAccountDto accountDto, CancellationToken cancellation)
     {
-        var existingAccount = await _accountRepository.FindWhere(account => account.Login == accountDto.Login, cancellation);
+        var normalizedLogin = Account.NormalizeLogin(accountDto.Login);
+        var existingAccount = await _accountRepository.FindWhere(account => account.NormalizedLogin == normalizedLogin, cancellation);
 
         // Одинаковое сообщение для неизвестного логина и неверного пароля, чтобы нельзя было перебором узнать логины.
         if (existingAccount == null || !_passwordHasher.Verify(accountDto.Password, existingAccount.PasswordHash))

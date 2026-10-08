@@ -19,6 +19,16 @@
         /// Логин пользователя.
         /// </summary>
         public string Login { get; set; }
+
+        /// <summary>
+        /// Логин в верхнем регистре: по нему ищется аккаунт и обеспечивается уникальность без учёта регистра.
+        /// </summary>
+        public string NormalizedLogin { get; set; }
+
+        /// <summary>
+        /// Привести логин к виду для поиска и сравнения.
+        /// </summary>
+        public static string NormalizeLogin(string login) => login.Trim().ToUpperInvariant();
         
         /// <summary>
         /// Хеш пароля (PBKDF2, вместе с солью и числом итераций).
