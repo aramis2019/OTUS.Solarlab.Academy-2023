@@ -1,4 +1,4 @@
-﻿namespace Board.Contracts.Interfaces
+namespace Board.Contracts.Interfaces
 {
     /// <summary>
     /// Сервис для работы с запрещёнными словами.
@@ -6,9 +6,11 @@
     public interface IForbiddenWordsService
     {
         /// <summary>
-        /// Получить список запрещённых слов.
+        /// Получить основы запрещённых слов в нижнем регистре (например, «реклам» для «реклама», «рекламой»).
+        /// Слово считается запрещённым, если начинается с основы и после неё идёт окончание
+        /// не длиннее <see cref="Attributes.ForbiddenWordsValidationAttribute.MaxEndingLength"/> букв.
         /// </summary>
-        /// <returns>Список запрещённых слов.</returns>
-        string[] GetForbiddenWords();
+        /// <returns>Основы запрещённых слов.</returns>
+        string[] GetForbiddenWordStems();
     }
 }

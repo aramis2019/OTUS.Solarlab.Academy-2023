@@ -14,13 +14,13 @@ namespace Board.Contracts.Account
         [Required(ErrorMessage = "Логин не указан")]
         [StringLength(64, ErrorMessage = "Логин либо слишком короткий, либо слишком длинный", MinimumLength = 3)]
         [ForbiddenWordsValidation]
-        public string Login { get; set; }
+        public string Login { get; set; } = string.Empty;
 
         /// <summary>
         /// Пароль.
         /// </summary>
         [Required(ErrorMessage = "Пароль не указан")]
         [StringLength(32, MinimumLength = 8)]
-        public string Password { get; set; }
+        public string Password { get; set; } = string.Empty;
     }
 }

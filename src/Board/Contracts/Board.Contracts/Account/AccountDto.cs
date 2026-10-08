@@ -13,6 +13,6 @@
         /// <summary>
         /// Логин.
         /// </summary>
-        public string Login { get; set; }
+        public string Login { get; set; } = string.Empty;
     }
 }

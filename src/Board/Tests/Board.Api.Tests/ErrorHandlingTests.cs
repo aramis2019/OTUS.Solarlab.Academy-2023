@@ -64,8 +64,9 @@ namespace Board.Api.Tests
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             var error = await response.Content.ReadFromJsonAsync<ErrorDto>();
             Assert.Equal("validation_error", error!.ErrorCode);
-            Assert.Contains(error.InternalErrors, e => e.ErrorCode == "Name");
-            Assert.Contains(error.InternalErrors, e => e.ErrorCode == "Address");
+            Assert.Contains(error.InternalErrors!, e => e.ErrorCode == "Name");
+            Assert.Contains(error.InternalErrors!, e => e.ErrorCode == "Address");
+            Assert.Contains(error.InternalErrors!, e => e.ErrorCode == "Description");
         }
 
         [Fact]

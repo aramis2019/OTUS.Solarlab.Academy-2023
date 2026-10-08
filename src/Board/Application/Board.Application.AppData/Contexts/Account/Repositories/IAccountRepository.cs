@@ -14,7 +14,7 @@ public interface IAccountRepository
     /// <param name="predicate"></param>
     /// <param name="cancellation"></param>
     /// <returns></returns>
-    Task<Account> FindWhere(Expression<Func<Account, bool>> predicate, CancellationToken cancellation);
+    Task<Account?> FindWhere(Expression<Func<Account, bool>> predicate, CancellationToken cancellation);
 
     /// <summary>
     /// Поиск пользователя по идентификатору.
@@ -22,7 +22,7 @@ public interface IAccountRepository
     /// <param name="id"> Идентификатор пользователя</param>
     /// <param name="cancellation"></param>
     /// <returns></returns>
-    Task<Account> FindById(Guid id, CancellationToken cancellation);
+    Task<Account?> FindById(Guid id, CancellationToken cancellation);
 
     /// <summary>
     /// Добавление пользователя.

@@ -95,9 +95,9 @@ public class AdvertService : IAdvertService
 
     private void EnsureIsAuthor(Advert entity)
     {
-        if (entity.AccountId == null || entity.AccountId != _currentUserAccessor.GetCurrentAccountId())
+        if (!_currentUserAccessor.CanModify(entity.AccountId))
         {
-            throw new AccessDeniedException("Изменять и удалять объявление может только его автор.");
+            throw new AccessDeniedException("Изменять и удалять объявление может только его автор или администратор.");
         }
     }
 

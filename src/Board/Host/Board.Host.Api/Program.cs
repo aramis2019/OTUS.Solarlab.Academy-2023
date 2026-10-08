@@ -15,14 +15,14 @@ using Board.Contracts.Interfaces;
 using Board.Host.Api.Middlewares;
 using Board.Host.Api.Options;
 using Board.Host.Api.Services;
-using Board.Infrastucture.DataAccess;
-using Board.Infrastucture.DataAccess.Contexts.Account.Repository;
-using Board.Infrastucture.DataAccess.Contexts.Advert.Repository;
-using Board.Infrastucture.DataAccess.Contexts.Category.Repository;
-using Board.Infrastucture.DataAccess.Contexts.Files.Repository;
-using Board.Infrastucture.DataAccess.Interfaces;
-using Board.Infrastucture.MapProfiles;
-using Board.Infrastucture.Repository;
+using Board.Infrastructure.DataAccess;
+using Board.Infrastructure.DataAccess.Contexts.Account.Repository;
+using Board.Infrastructure.DataAccess.Contexts.Advert.Repository;
+using Board.Infrastructure.DataAccess.Contexts.Category.Repository;
+using Board.Infrastructure.DataAccess.Contexts.Files.Repository;
+using Board.Infrastructure.DataAccess.Interfaces;
+using Board.Infrastructure.MapProfiles;
+using Board.Infrastructure.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
@@ -144,6 +144,29 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
     .Configure<IConfiguration>((options, configuration) =>
     {
         options.RequireHttpsMetadata = false;
+        // Ответы 401/403 от аутентификации — в том же формате ErrorDto, что и остальные ошибки.
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsJsonAsync(new ErrorDto
+                {
+                    ErrorCode = "unauthorized",
+                    UserMessage = "Требуется аутентификация."
+                });
+            },
+            OnForbidden = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return context.Response.WriteAsJsonAsync(new ErrorDto
+                {
+                    ErrorCode = "forbidden",
+                    UserMessage = "Недостаточно прав для выполнения операции."
+                });
+            }
+        };
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,

@@ -1,42 +1,49 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using Board.Contracts.Interfaces;
 
 namespace Board.Contracts.Attributes
 {
     /// <summary>
     /// Атрибут проверки строкового поля на содержание запрещённых слов.
+    /// Проверяются отдельные слова, а не подстроки: «рекламой» запрещено, «рекламация» — нет.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
     public class ForbiddenWordsValidationAttribute : ValidationAttribute
     {
+        /// <summary>
+        /// Максимальная длина окончания после основы запрещённого слова.
+        /// </summary>
+        public const int MaxEndingLength = 3;
+
+        private static readonly Regex WordRegex = new(@"\p{L}+", RegexOptions.Compiled);
+
         /// <inheritdoc />
         protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
         {
-            var valueAsString = value as string;
-
-            if (valueAsString == null)
+            if (value is not string valueAsString)
             {
                 return ValidationResult.Success;
             }
 
             // получить сервис из контекста
-            var service = (IForbiddenWordsService?)validationContext.GetService(typeof(IForbiddenWordsService));
-
+            var service = validationContext.GetService(typeof(IForbiddenWordsService)) as IForbiddenWordsService;
             if (service == null)
             {
                 return ValidationResult.Success;
             }
 
-            // получить список запрещённых слов из сервиса
-            var forbiddenWords = service.GetForbiddenWords();
+            var stems = service.GetForbiddenWordStems();
+            var containsForbiddenWord = WordRegex.Matches(valueAsString)
+                .Select(match => match.Value.ToLowerInvariant())
+                .Any(word => stems.Any(stem => IsFormOf(word, stem)));
 
-            // определить - содержит ли значение хотя бы одно запрещённое слово (при проверке регистр не учитывать)
-            var valueContainsAnyForbiddenWord = forbiddenWords.Any(forbiddenWord =>
-                valueAsString.Contains(forbiddenWord, StringComparison.InvariantCultureIgnoreCase));
-
-            return valueContainsAnyForbiddenWord
+            return containsForbiddenWord
                 ? new ValidationResult("Значение содержит запрещённые слова")
                 : ValidationResult.Success;
         }
+
+        private static bool IsFormOf(string word, string stem) =>
+            word.StartsWith(stem, StringComparison.Ordinal) && word.Length - stem.Length <= MaxEndingLength;
     }
 }

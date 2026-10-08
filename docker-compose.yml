@@ -1,5 +1,6 @@
-version: '3.7'
-
+# Требуется Docker Compose v2 (`docker compose`) или docker-compose >= 1.29:
+# старт сервисов ждёт готовности БД и завершения миграций (depends_on.condition).
+#
 # Секреты берутся из переменных окружения или файла .env рядом с этим файлом
 # (см. .env.example). Файл .env в репозиторий не коммитится.
 
@@ -16,10 +17,13 @@ services:
       - ConnectionStrings__PostgresBoardDb=Server=postgres;Database=Board;Username=postgres;Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set};Port=5432
       - Jwt__Key=${JWT_KEY:?JWT_KEY is not set}
       - AutoMapper__LicenseKey=${AUTOMAPPER_LICENSE_KEY:-}
+      - Administration__AdminLogins__0=${ADMIN_LOGIN:-}
     networks:
       - solarlab-academy-network
+    restart: unless-stopped
     depends_on:
-      - "migrator"
+      migrator:
+        condition: service_completed_successfully
 
   migrator:
     container_name: solarlab-academy-migrator
@@ -31,7 +35,8 @@ services:
     networks:
       - solarlab-academy-network
     depends_on:
-      - "postgres"
+      postgres:
+        condition: service_healthy
 
   adminer:
     container_name: adminer
@@ -43,7 +48,8 @@ services:
     networks:
       - solarlab-academy-network
     depends_on:
-      - "postgres"
+      postgres:
+        condition: service_healthy
 
   postgres:
     container_name: postgres
@@ -54,6 +60,12 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set}
     volumes:
       - pg-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d Board"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     ports:
       # Только с локальной машины, наружу БД не публикуется.
       - "127.0.0.1:5432:5432"

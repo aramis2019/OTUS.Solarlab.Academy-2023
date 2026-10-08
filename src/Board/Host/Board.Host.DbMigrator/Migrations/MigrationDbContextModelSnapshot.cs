@@ -17,7 +17,7 @@ namespace Board.Host.DbMigrator.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.4")
+                .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -41,6 +41,11 @@ namespace Board.Host.DbMigrator.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("NormalizedLogin")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -48,7 +53,7 @@ namespace Board.Host.DbMigrator.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Login")
+                    b.HasIndex("NormalizedLogin")
                         .IsUnique();
 
                     b.ToTable("Account");
@@ -138,6 +143,7 @@ namespace Board.Host.DbMigrator.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<byte[]>("Content")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<string>("ContentType")

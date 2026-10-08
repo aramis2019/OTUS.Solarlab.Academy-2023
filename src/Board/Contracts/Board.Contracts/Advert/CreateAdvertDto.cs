@@ -14,14 +14,15 @@ public class CreateAdvertDto
     [Required(ErrorMessage = "Наименование не указано")]
     [StringLength(32, ErrorMessage = "Наименование либо слишком короткое, либо слишком длинное", MinimumLength = 3)]
     [ForbiddenWordsValidation]
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// Описание.
     /// </summary>
+    [Required(ErrorMessage = "Описание не указано")]
     [StringLength(100, ErrorMessage = "Описание либо слишком короткое, либо слишком длинное", MinimumLength = 10)]
     [ForbiddenWordsValidation]
-    public string Description { get; set; }
+    public string Description { get; set; } = string.Empty;
 
     /// <summary>
     /// Идентификатор категории.
@@ -34,7 +35,7 @@ public class CreateAdvertDto
     /// </summary>
     [StringLength(250)]
     [ForbiddenWordsValidation]
-    public string ImageUrl { get; set; }
+    public string? ImageUrl { get; set; }
 
     /// <summary>
     /// Цена.
@@ -47,5 +48,5 @@ public class CreateAdvertDto
     [Required(ErrorMessage = "Адрес не указан")]
     [StringLength(250, ErrorMessage = "Адрес либо слишком короткий, либо слишком длинный", MinimumLength = 3)]
     [ForbiddenWordsValidation]
-    public string Address { get; set; }
+    public string Address { get; set; } = string.Empty;
 }
