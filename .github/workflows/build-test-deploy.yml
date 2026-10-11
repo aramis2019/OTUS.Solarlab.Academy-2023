@@ -46,6 +46,11 @@ jobs:
         host: ${{ secrets.SSH_HOST }}
         password: ${{ secrets.SSH_PASSWORD }}
         script: |
+          set -e
           cd app/Solarlab.Academy-2023/
-          git pull
-          docker-compose up -d --build
+          if [ ! -f .env ]; then
+            echo "Нет файла .env с секретами (см. .env.example) — деплой прерван." >&2
+            exit 1
+          fi
+          git pull --ff-only
+          docker compose up -d --build

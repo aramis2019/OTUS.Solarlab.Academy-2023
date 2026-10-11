@@ -5,7 +5,7 @@
 
 Секреты (ключ подписи JWT, пароль БД) в репозитории не хранятся.
 
-- **docker-compose** берёт их из файла `.env` рядом с `docker-compose.yml` (он в `.gitignore`):
+- **Docker Compose** берёт их из файла `.env` рядом с `docker-compose.yml` (он в `.gitignore`):
 
   ```
   cp .env.example .env
@@ -58,10 +58,10 @@
 
 - Проверить состояние сервисов: 
   
-  `docker-compose ps` 
+  `docker compose ps` 
 
 - Отключение: 
   
-  `docker-compose down` 
+  `docker compose down` 
   
   (порты свободны, сохраняется **persisted volume** для БД).
